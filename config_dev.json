@@ -1,0 +1,13 @@
+{
+  "GOOGLE_CLOUD_PROJECT": "glamour-dataops-dev",
+  "GCS_BUCKET": "",
+  "GCS_PREFIX": "raw/mysql",
+  "EXTRACTION_BATCH_SIZE": 50000,
+  "secrets": {
+    "MYSQL_HOST": "MYSQL_HOST",
+    "MYSQL_USER": "MYSQL_USER",
+    "MYSQL_PASSWORD": "MYSQL_PASSWORD",
+    "MYSQL_DATABASE": "MYSQL_DATABASE",
+    "MYSQL_PORT": "MYSQL_PORT"
+  }
+}

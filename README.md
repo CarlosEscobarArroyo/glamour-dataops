@@ -18,7 +18,7 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
 
 ## 2. Arquitectura del Flujo Operativo
 
-![Arquitectura DataOps Glamour Perú](./docs/GlamourDataOpsDiagrama-TO-BE.drawio.svg)
+![Arquitectura DataOps Glamour Perú](./docs/Arquitectura.drawio.svg)
 
 
 1. **Cloud Scheduler (05:00 AM):** Dispara automáticamente el inicio del flujo diario sin intervención manual.
@@ -38,18 +38,26 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
 
 ## 3. Estructura del Monorepo
 
+Cada contenedor agrupa su código, dependencias y pruebas en una carpeta dentro de `src/`.
+
+Guía del primer contenedor: [extracción de MariaDB a GCS](./src/extraction/README.md).
+El workflow [CI extracción](./.github/workflows/ci-extraction.yml) ejecuta las pruebas
+con Python 3.11 en cada push, pull request o ejecución manual, sin acceder a MariaDB ni GCP.
+Los componentes siguientes describen la estructura objetivo; las carpetas de
+calidad, transformación, infraestructura y orquestación aún no están implementadas.
+
 * **`.github/workflows/`** — Pipelines CI/CD (GitHub Actions)
-  * `ci-tests-lint.yml`: Pruebas unitarias Python, validación SQL y formato de Terraform.
-  * `cd-terraform.yml`: Despliegue de infraestructura en GCP (`dev` / `prod`).
-  * `cd-containers.yml`: Construcción y publicación de imágenes Docker en Artifact Registry.
+  * `ci-extraction.yml`: Pruebas unitarias del extractor (implementado).
+  * `cd-terraform.yml`: Despliegue de infraestructura en GCP (`dev` / `prod`), pendiente.
+  * `cd-containers.yml`: Construcción y publicación de imágenes Docker en Artifact Registry, pendiente.
 * **`infra/`** — Infraestructura como Código (Terraform)
   * `modules/`: Módulos reutilizables (`storage`, `bigquery`, `cloud_run`, `iam`, `vpc`).
   * `environments/dev/`: Configuración del entorno `glamour-dataops-dev`.
   * `environments/prod/`: Configuración del entorno `glamour-dataops-prod`.
 * **`src/`** — Código fuente del pipeline
-  * `extraction/`: Contenedor 1 — Cloud Run Job de extracción en Python.
-  * `quality/`: Contenedor 2 — Cloud Run Job de calidad con Great Expectations.
-  * `transformation/`: Consultas y modelado en BigQuery.
+  * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
+  * `quality/`: Contenedor 2 — Cloud Run Job de calidad con Great Expectations, pendiente.
+  * `transformation/`: Consultas y modelado en BigQuery, pendiente.
 * **`orchestration/`** — Definición del orquestador
   * `workflow_comercial.yaml`: Flujo declarativo de Google Cloud Workflows.
 * **`governance/`** — Documentación base y configuración de OpenMetadata
@@ -91,7 +99,8 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
 3. Definir el proyecto activo de desarrollo:
    `gcloud config set project glamour-dataops-dev`
 
-[TBD]
+Para configurar `config_dev.json`, ejecutar el extractor o correr las pruebas,
+consultar la [guía de extracción](./src/extraction/README.md).
 
 ---
 

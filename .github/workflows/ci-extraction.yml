@@ -1,0 +1,23 @@
+name: CI extracción
+
+on: [workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: python -m pip install -r src/extraction/requirements.txt
+
+      - name: Ejecutar pruebas
+        run: python -B -m unittest discover -s src/extraction -v
