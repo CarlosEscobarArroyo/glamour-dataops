@@ -41,6 +41,7 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
 Cada contenedor agrupa su código, dependencias y pruebas en una carpeta dentro de `src/`.
 
 Guía del primer contenedor: [extracción de MariaDB a GCS](./src/extraction/README.md).
+Convención de publicación: [imágenes de los Jobs en Artifact Registry](./docs/artifact_registry.md).
 El workflow [CI extracción](./.github/workflows/ci-extraction.yml) ejecuta las pruebas
 con Python 3.11 en cada push, pull request o ejecución manual, sin acceder a MariaDB ni GCP.
 Los componentes siguientes describen la estructura objetivo; las carpetas de

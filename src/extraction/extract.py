@@ -1,4 +1,4 @@
-"""Extrae las cinco tablas del ETL legacy y guarda sus datos crudos en GCS."""
+"""Extrae las 18 tablas comerciales seleccionadas y guarda sus datos crudos en GCS."""
 
 from datetime import datetime, timezone
 import json
@@ -15,10 +15,28 @@ import pyarrow.parquet as pq
 import pymysql
 
 
-# Mismas tablas y extracción completa que extraer_datos_mysql() del legacy.
-TABLAS = ("persona", "contenido", "campana", "documento", "documentodetalle")
 CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config_dev.json"
 MYSQL_SECRET_KEYS = ("MYSQL_HOST", "MYSQL_USER", "MYSQL_PASSWORD", "MYSQL_DATABASE", "MYSQL_PORT")
+TABLAS = (
+    "persona",
+    "contenido",
+    "campana",
+    "documento",
+    "documentodetalle",
+    "stockcontrol",
+    "stockmovi",
+    "stocknotas",
+    "contenidoprenda",
+    "campanarangos",
+    "sventas",
+    "personasaldos",
+    "webparametros",
+    "webmodulos",
+    "pagepagos",
+    "seccion",
+    "seccioncontenido",
+    "documentofile",
+)
 
 
 class ConfigurationError(ValueError):
@@ -32,7 +50,10 @@ def cargar_config() -> dict:
         config = {}
     except (OSError, ValueError) as error:
         raise ConfigurationError("No se pudo leer config_dev.json como JSON válido") from error
-    for name in ("GOOGLE_CLOUD_PROJECT", "GCS_BUCKET", "GCS_PREFIX", "EXTRACTION_BATCH_SIZE"):
+    if not isinstance(config, dict):
+        raise ConfigurationError("config_dev.json debe contener un objeto JSON")
+
+    for name in ("GOOGLE_CLOUD_PROJECT", "GCS_BUCKET", "EXTRACTION_BATCH_SIZE"):
         if name in os.environ:
             config[name] = os.environ[name]
     secret_names = config.setdefault("secrets", {})
@@ -126,8 +147,9 @@ def esquema_tabla(connection, table: str):
 
     fields, expressions = [], []
     for name, data_type, column_type, precision, scale, nullable in columns:
+        data_type = data_type.lower()
         try:
-            dtype = arrow_type(data_type.lower(), column_type, precision, scale)
+            dtype = arrow_type(data_type, column_type, precision, scale)
         except ValueError:
             log_event("unsupported_column_type", "ERROR", table=table,
                       column=name, data_type=data_type)
@@ -136,7 +158,7 @@ def esquema_tabla(connection, table: str):
         # MariaDB TIME admite duraciones negativas y superiores a 24 horas.
         # Su representación textual conserva esos valores en Parquet.
         expression = quoted(name)
-        if data_type.lower() == "time":
+        if data_type == "time":
             expression = f"CAST({expression} AS CHAR) AS {quoted(name)}"
         expressions.append(expression)
     return pa.schema(fields), ", ".join(expressions)
@@ -179,6 +201,7 @@ def extraer_tabla(connection, bucket, table: str, run_prefix: str, batch_size: i
 
 def extraer_datos_mysql(connection, bucket, run_prefix: str, batch_size: int):
     results = {}
+    log_event("tables_selected", tables=TABLAS)
     # TIMESTAMP se exporta en UTC; DATETIME conserva su valor sin zona horaria.
     with connection.cursor() as cursor:
         cursor.execute("SET SESSION time_zone = '+00:00'")
@@ -189,9 +212,11 @@ def extraer_datos_mysql(connection, bucket, run_prefix: str, batch_size: int):
     manifest = {
         "status": "complete",
         "completed_at": datetime.now(timezone.utc).isoformat(),
+        "scope": "selected_tables",
+        "selected_tables": TABLAS,
         "tables": results,
     }
-    # Solo existe un manifiesto cuando las cinco tablas terminaron correctamente.
+    # Solo existe un manifiesto cuando todas las tablas seleccionadas terminaron.
     bucket.blob(f"{run_prefix}/manifest.json").upload_from_string(
         json.dumps(manifest), content_type="application/json", if_generation_match=0,
     )
@@ -223,18 +248,18 @@ def ejecutar_extraccion() -> None:
     if not project_id:
         raise ConfigurationError("Configura GOOGLE_CLOUD_PROJECT")
 
-    prefix = config.get("GCS_PREFIX", "raw/mysql").strip("/")
     started = datetime.now(timezone.utc)
     run_id = f"{started:%Y%m%dT%H%M%SZ}-{uuid4().hex}"
-    run_prefix = "/".join(filter(None, [prefix, f"date={started:%Y-%m-%d}", run_id]))
+    run_prefix = f"date={started:%Y-%m-%d}/{run_id}"
     log_event("extraction_started", run_id=run_id, bucket=bucket_name,
               prefix=run_prefix)
 
-    with secretmanager.SecretManagerServiceClient(credentials=credentials) as secrets:
-        with storage.Client(project=project_id, credentials=credentials) as gcs:
-            with conectar_mysql(secrets, project_id, config["secrets"]) as connection:
-                extraer_datos_mysql(connection, gcs.bucket(bucket_name),
-                                   run_prefix, batch_size)
+    with (
+        secretmanager.SecretManagerServiceClient(credentials=credentials) as secrets,
+        storage.Client(project=project_id, credentials=credentials) as gcs,
+        conectar_mysql(secrets, project_id, config["secrets"]) as connection,
+    ):
+        extraer_datos_mysql(connection, gcs.bucket(bucket_name), run_prefix, batch_size)
     log_event("extraction_completed", uri=f"gs://{bucket_name}/{run_prefix}")
 
 

@@ -1,0 +1,1024 @@
+{
+  "tables": {
+    "campana": {
+      "rows": 174,
+      "columns": 9,
+      "primary_key": [
+        "ccodcampana"
+      ],
+      "dates": {
+        "dfecinicio": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "1019-01-07",
+          "max": "2026-11-02"
+        },
+        "dfecfinal": {
+          "null": 0,
+          "invalid": 2,
+          "zero_date": 2,
+          "min": "1019-03-23",
+          "max": "9999-12-19"
+        },
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-10-29 12:30:54",
+          "max": "2026-10-30 12:46:19"
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "campanarangos": {
+      "rows": 560,
+      "columns": 6,
+      "primary_key": [
+        "idrango"
+      ],
+      "dates": {},
+      "nonzero_amounts": {
+        "nmontoini": 494,
+        "nmontofin": 560,
+        "nporcentaje": 444
+      },
+      "duplicate_primary_keys": 0
+    },
+    "contenido": {
+      "rows": 5148,
+      "columns": 41,
+      "primary_key": [
+        "ccodcontenido"
+      ],
+      "dates": {
+        "dfecinicio": {
+          "null": 0,
+          "invalid": 5148,
+          "zero_date": 5148,
+          "min": null,
+          "max": null
+        },
+        "dfecfin": {
+          "null": 0,
+          "invalid": 5148,
+          "zero_date": 5148,
+          "min": null,
+          "max": null
+        },
+        "dfeccontenido": {
+          "null": 0,
+          "invalid": 3689,
+          "zero_date": 3689,
+          "min": "2016-10-25",
+          "max": "2026-10-29"
+        },
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-10-24 08:55:08",
+          "max": "2026-10-29 12:52:10"
+        }
+      },
+      "nonzero_amounts": {
+        "nprecompra": 62,
+        "npreproducto": 4879,
+        "npremayor": 324
+      },
+      "duplicate_primary_keys": 0
+    },
+    "contenidodetalle": {
+      "rows": 5140,
+      "columns": 9,
+      "primary_key": [
+        "ccoddetalle"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "contenidogaleria": {
+      "rows": 115,
+      "columns": 9,
+      "primary_key": [
+        "ccodgaleria"
+      ],
+      "dates": {
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-11-10",
+          "max": "2016-11-11"
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "contenidoprenda": {
+      "rows": 94804,
+      "columns": 6,
+      "primary_key": [
+        "ccodstock",
+        "ccodcampana"
+      ],
+      "dates": {
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-10-29 12:53:31",
+          "max": "2026-10-30 10:41:27"
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "documento": {
+      "rows": 81085,
+      "columns": 37,
+      "primary_key": [
+        "ccodpedido"
+      ],
+      "dates": {
+        "dfecpedido": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-11-02",
+          "max": "2026-10-30"
+        },
+        "dfecpago": {
+          "null": 0,
+          "invalid": 21224,
+          "zero_date": 21224,
+          "min": "2016-11-02",
+          "max": "2026-10-30"
+        },
+        "dfecconfirma": {
+          "null": 0,
+          "invalid": 21458,
+          "zero_date": 21458,
+          "min": "2016-11-02",
+          "max": "2026-10-30"
+        },
+        "dfecfactura": {
+          "null": 0,
+          "invalid": 21555,
+          "zero_date": 21555,
+          "min": "1988-01-01",
+          "max": "2026-10-30"
+        },
+        "dfecentrega": {
+          "null": 0,
+          "invalid": 21892,
+          "zero_date": 21892,
+          "min": "2016-11-02",
+          "max": "2026-10-30"
+        },
+        "dfecdevolucion": {
+          "null": 56371,
+          "invalid": 24314,
+          "zero_date": 24314,
+          "min": "2018-02-19",
+          "max": "2026-03-07"
+        },
+        "dfecncredito": {
+          "null": 0,
+          "invalid": 80871,
+          "zero_date": 80871,
+          "min": "2018-01-26",
+          "max": "2019-01-15"
+        },
+        "dfecanulacion": {
+          "null": 0,
+          "invalid": 59706,
+          "zero_date": 59706,
+          "min": "2016-11-16",
+          "max": "2026-10-30"
+        },
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-11-02 09:46:42",
+          "max": "2026-10-30 18:24:43"
+        }
+      },
+      "nonzero_amounts": {
+        "nmonpedido": 77396,
+        "nmoncomision": 67811,
+        "nmonenvio": 56363,
+        "nmonpago": 77688,
+        "nporpago": 0,
+        "nmondevuelto": 604,
+        "nsalpago": 4525
+      },
+      "duplicate_primary_keys": 0
+    },
+    "documentodetalle": {
+      "rows": 424953,
+      "columns": 15,
+      "primary_key": [
+        "idpedido"
+      ],
+      "dates": {
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-11-02 09:24:00",
+          "max": "2026-10-30 18:13:36"
+        }
+      },
+      "nonzero_amounts": {
+        "nprecio": 381786,
+        "nprepromo": 8692,
+        "nimporte": 379128,
+        "wstotal": 7566
+      },
+      "duplicate_primary_keys": 0
+    },
+    "documentofile": {
+      "rows": 23199,
+      "columns": 3,
+      "primary_key": [
+        "ccodfile"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "documentotmp": {
+      "rows": 3,
+      "columns": 6,
+      "primary_key": [
+        "idpedido"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "page": {
+      "rows": 1,
+      "columns": 43,
+      "primary_key": [
+        "ccodpage"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "pagedocs": {
+      "rows": 8,
+      "columns": 7,
+      "primary_key": [
+        "ccoddocu"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "pagehome": {
+      "rows": 33,
+      "columns": 37,
+      "primary_key": [
+        "ccodinicio"
+      ],
+      "dates": {
+        "dfecinicio": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2017-01-20",
+          "max": "2022-11-12"
+        },
+        "dfecfinal": {
+          "null": 0,
+          "invalid": 33,
+          "zero_date": 33,
+          "min": null,
+          "max": null
+        },
+        "dfechome": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2017-01-20",
+          "max": "2022-11-12"
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "pagehomedet": {
+      "rows": 138,
+      "columns": 2,
+      "primary_key": [
+        "ccodinicio",
+        "ccoddestino"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "pagehomeitem": {
+      "rows": 8,
+      "columns": 8,
+      "primary_key": [
+        "ccoditem"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "pagehomesub": {
+      "rows": 10,
+      "columns": 39,
+      "primary_key": [
+        "ccodsub"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "pagemenu": {
+      "rows": 2,
+      "columns": 7,
+      "primary_key": [
+        "ccodmenu"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "pagepagos": {
+      "rows": 9,
+      "columns": 12,
+      "primary_key": [
+        "ccodpagos"
+      ],
+      "dates": {},
+      "nonzero_amounts": {
+        "ncomision": 0
+      },
+      "duplicate_primary_keys": 0
+    },
+    "persona": {
+      "rows": 21908,
+      "columns": 39,
+      "primary_key": [
+        "ccodpersona"
+      ],
+      "dates": {
+        "dnacpersona": {
+          "null": 0,
+          "invalid": 12734,
+          "zero_date": 12734,
+          "min": "0001-01-01",
+          "max": "9973-12-19"
+        },
+        "dlogpersona": {
+          "null": 0,
+          "invalid": 21694,
+          "zero_date": 21694,
+          "min": "2018-02-01 19:22:30",
+          "max": "2026-10-30 18:39:25"
+        },
+        "dfecpersona": {
+          "null": 1,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-09-30",
+          "max": "2026-10-30"
+        },
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-10-24 01:36:49",
+          "max": "2026-10-30 15:26:27"
+        }
+      },
+      "nonzero_amounts": {
+        "nsalfavor": 193
+      },
+      "duplicate_primary_keys": 0
+    },
+    "personabuzon": {
+      "rows": 0,
+      "columns": 12,
+      "primary_key": [
+        "ccodmensaje"
+      ],
+      "dates": {
+        "dfecmensaje": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": null,
+          "max": null
+        },
+        "dfeclectura": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": null,
+          "max": null
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "personapage": {
+      "rows": 21909,
+      "columns": 4,
+      "primary_key": [
+        "ccodpersona",
+        "ccodpage"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "personasaldos": {
+      "rows": 5614,
+      "columns": 9,
+      "primary_key": [
+        "ccodsaldo"
+      ],
+      "dates": {
+        "dfecsaldo": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2018-08-02",
+          "max": "2026-10-30"
+        }
+      },
+      "nonzero_amounts": {
+        "nmonsaldo": 5614
+      },
+      "duplicate_primary_keys": 0
+    },
+    "personaventas": {
+      "rows": 451,
+      "columns": 6,
+      "primary_key": [],
+      "dates": {},
+      "nonzero_amounts": {
+        "nmonpedemp": 450,
+        "nmonpedlid": 63
+      }
+    },
+    "seccion": {
+      "rows": 55,
+      "columns": 35,
+      "primary_key": [
+        "ccodseccion"
+      ],
+      "dates": {
+        "dfecseccion": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-10-24",
+          "max": "2018-01-25"
+        },
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-10-24 07:44:17",
+          "max": "2021-03-08 00:41:21"
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "seccioncontenido": {
+      "rows": 2286,
+      "columns": 5,
+      "primary_key": [
+        "ccodseccion",
+        "ccodcontenido"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "secciondetalle": {
+      "rows": 55,
+      "columns": 9,
+      "primary_key": [
+        "ccodseccion"
+      ],
+      "dates": {
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 51,
+          "zero_date": 51,
+          "min": "2017-01-23 10:26:54",
+          "max": "2021-03-08 00:41:21"
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "seccionmenu": {
+      "rows": 8,
+      "columns": 4,
+      "primary_key": [
+        "ccodmenu",
+        "ccodseccion"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "senvios": {
+      "rows": 448,
+      "columns": 14,
+      "primary_key": [
+        "ccodenvio"
+      ],
+      "dates": {
+        "dfecenvio": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2019-04-05",
+          "max": "2019-05-31"
+        },
+        "dfecdocumento": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2019-04-05",
+          "max": "2019-05-31"
+        }
+      },
+      "nonzero_amounts": {
+        "ncosenvio": 441
+      },
+      "duplicate_primary_keys": 0
+    },
+    "spagos": {
+      "rows": 0,
+      "columns": 11,
+      "primary_key": [
+        "ccodpago"
+      ],
+      "dates": {
+        "dfecpago": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": null,
+          "max": null
+        },
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": null,
+          "max": null
+        }
+      },
+      "nonzero_amounts": {
+        "nmonpago": 0
+      },
+      "duplicate_primary_keys": 0
+    },
+    "stockcontrol": {
+      "rows": 18938,
+      "columns": 9,
+      "primary_key": [
+        "ccodstock"
+      ],
+      "dates": {
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2016-10-29 12:15:49",
+          "max": "2026-10-30 15:09:30"
+        }
+      },
+      "nonzero_amounts": {
+        "nstock": 6752,
+        "nstockrete": 359,
+        "nstockmin": 298
+      },
+      "duplicate_primary_keys": 0
+    },
+    "stockmovi": {
+      "rows": 359853,
+      "columns": 11,
+      "primary_key": [
+        "ccodmovi"
+      ],
+      "dates": {
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2017-09-01 09:02:59",
+          "max": "2026-10-30 15:09:30"
+        }
+      },
+      "nonzero_amounts": {
+        "nprecio": 0,
+        "nstock": 343477
+      },
+      "duplicate_primary_keys": 0
+    },
+    "stocknotas": {
+      "rows": 93504,
+      "columns": 14,
+      "primary_key": [
+        "ccodnota"
+      ],
+      "dates": {
+        "dfecnota": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2017-09-01",
+          "max": "2026-10-30"
+        },
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2017-09-01 09:02:59",
+          "max": "2026-10-30 15:09:30"
+        }
+      },
+      "nonzero_amounts": {
+        "nmonnota": 589
+      },
+      "duplicate_primary_keys": 0
+    },
+    "sventas": {
+      "rows": 7094,
+      "columns": 17,
+      "primary_key": [
+        "ccodventas"
+      ],
+      "dates": {
+        "dfecventa": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2019-01-21",
+          "max": "2026-10-30"
+        }
+      },
+      "nonzero_amounts": {
+        "nmonventa": 7094,
+        "nmonigv": 7094,
+        "nmontotal": 7094
+      },
+      "duplicate_primary_keys": 0
+    },
+    "webcostos": {
+      "rows": 11,
+      "columns": 6,
+      "primary_key": [
+        "ccodcosto"
+      ],
+      "dates": {},
+      "nonzero_amounts": {
+        "nminmonto": 2,
+        "nmaxmonto": 11,
+        "ncosenvio": 11
+      },
+      "duplicate_primary_keys": 0
+    },
+    "webmodulos": {
+      "rows": 3,
+      "columns": 3,
+      "primary_key": [
+        "ccodmodulo"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "webparametros": {
+      "rows": 931,
+      "columns": 12,
+      "primary_key": [
+        "ccodparametro",
+        "ctipparametro",
+        "cvalparametro"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "webubigeo": {
+      "rows": 2214,
+      "columns": 5,
+      "primary_key": [
+        "ccodubigeo"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "webzonas": {
+      "rows": 4,
+      "columns": 5,
+      "primary_key": [
+        "ccodzona"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "webzonasdet": {
+      "rows": 2,
+      "columns": 2,
+      "primary_key": [
+        "ccodzona",
+        "ccodubigeo"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "wsestilo": {
+      "rows": 1,
+      "columns": 69,
+      "primary_key": [
+        "ccodplantilla"
+      ],
+      "dates": {
+        "dfecmodifica": {
+          "null": 0,
+          "invalid": 0,
+          "zero_date": 0,
+          "min": "2019-11-22 00:00:00",
+          "max": "2019-11-22 00:00:00"
+        }
+      },
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "wsestiloclases": {
+      "rows": 32,
+      "columns": 3,
+      "primary_key": [
+        "ccodclase"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "wsestilocontenido": {
+      "rows": 12,
+      "columns": 6,
+      "primary_key": [
+        "ccodestcontenido"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "wsestilofuentes": {
+      "rows": 11,
+      "columns": 5,
+      "primary_key": [
+        "ccodfuente"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "wsestiloseccion": {
+      "rows": 11,
+      "columns": 6,
+      "primary_key": [
+        "ccodsecestilo"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    },
+    "wsopciones": {
+      "rows": 51,
+      "columns": 9,
+      "primary_key": [
+        "ccodopcion"
+      ],
+      "dates": {},
+      "nonzero_amounts": {},
+      "duplicate_primary_keys": 0
+    }
+  },
+  "relationships": [
+    {
+      "child": "documentodetalle.ccodpedido",
+      "parent": "documento.ccodpedido",
+      "rows": 424953,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "documentodetalle.ccodcontenido",
+      "parent": "contenido.ccodcontenido",
+      "rows": 424953,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 41396,
+      "unmatched_nonzero": 41396,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "documento.ccodcliente",
+      "parent": "persona.ccodpersona",
+      "rows": 81085,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 96,
+      "unmatched_nonzero": 96,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "documento.ccodcampana",
+      "parent": "campana.ccodcampana",
+      "rows": 81085,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "stockcontrol.ccodcontenido",
+      "parent": "contenido.ccodcontenido",
+      "rows": 18938,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 1968,
+      "unmatched_nonzero": 1968,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "stockmovi.ccodnota",
+      "parent": "stocknotas.ccodnota",
+      "rows": 359853,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "stockmovi.ccodcontenido",
+      "parent": "contenido.ccodcontenido",
+      "rows": 359853,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 31272,
+      "unmatched_nonzero": 31272,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "stocknotas.ccodpedido",
+      "parent": "documento.ccodpedido",
+      "rows": 93504,
+      "blank": 0,
+      "zero": 45771,
+      "unmatched_including_zero": 45780,
+      "unmatched_nonzero": 9,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "contenidoprenda.ccodstock",
+      "parent": "stockcontrol.ccodstock",
+      "rows": 94804,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "contenidoprenda.ccodcampana",
+      "parent": "campana.ccodcampana",
+      "rows": 94804,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "campanarangos.ccodcampana",
+      "parent": "campana.ccodcampana",
+      "rows": 560,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "sventas.ccodpedido",
+      "parent": "documento.ccodpedido",
+      "rows": 7094,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "personasaldos.ccodpersona",
+      "parent": "persona.ccodpersona",
+      "rows": 5614,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "personasaldos.ccodpedido",
+      "parent": "documento.ccodpedido",
+      "rows": 5614,
+      "blank": 5305,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "personaventas.ccodpersona",
+      "parent": "persona.ccodpersona",
+      "rows": 451,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 2,
+      "unmatched_nonzero": 2,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "personaventas.ccodcampana",
+      "parent": "campana.ccodcampana",
+      "rows": 451,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "persona.ccodubigeo",
+      "parent": "webubigeo.ccodubigeo",
+      "rows": 21908,
+      "blank": 12,
+      "zero": 0,
+      "unmatched_including_zero": 1,
+      "unmatched_nonzero": 1,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "documentofile.ccodpedido",
+      "parent": "documento.ccodpedido",
+      "rows": 23199,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 0,
+      "unmatched_nonzero": 0,
+      "parent_duplicates": 0
+    },
+    {
+      "child": "seccioncontenido.ccodcontenido",
+      "parent": "contenido.ccodcontenido",
+      "rows": 2286,
+      "blank": 0,
+      "zero": 0,
+      "unmatched_including_zero": 6,
+      "unmatched_nonzero": 6,
+      "parent_duplicates": 0
+    }
+  ],
+  "foreign_keys_declared": 0,
+  "provenance": {
+    "extracted_at_utc": "2026-10-30T23:09:49.344246+00:00",
+    "local_copy": "/tmp/glamour-discovery/20261030T230910Z",
+    "date_encoding": "SQL text; zero dates preserved",
+    "join_comparison": "exact string; no SQL collation normalization",
+    "snapshot": "sequential; not transactionally consistent",
+    "gcs_uploaded": false
+  }
+}

@@ -1,0 +1,3780 @@
+{
+  "selection": {
+    "source_snapshot": "/tmp/glamour-discovery/20261030T230910Z",
+    "status": "technical_recommendation_not_applied",
+    "groups": {
+      "daily": {
+        "persona": {
+          "rows": 21908,
+          "reason": "Maestro de personas: 21.908 filas. Conservar relaciones comerciales y ubicación; excluir autenticación del flujo analítico."
+        },
+        "contenido": {
+          "rows": 5148,
+          "reason": "Catálogo de 5.148 registros. Necesario para productos; no cubre todas las referencias históricas. Conservar ccodmodulo."
+        },
+        "campana": {
+          "rows": 174,
+          "reason": "174 campañas; todos los pedidos encuentran campaña. Validar fechas anómalas sin corregir el origen."
+        },
+        "documento": {
+          "rows": 81085,
+          "reason": "81.085 pedidos de 2016–2026. Conservar estados, importes, pagos, devoluciones y fechas."
+        },
+        "documentodetalle": {
+          "rows": 424953,
+          "reason": "424.953 líneas, todas con pedido. Incluye talla, color, cantidades y precios. Preservar referencias sin producto."
+        },
+        "stockcontrol": {
+          "rows": 18938,
+          "reason": "18.938 variantes; 6.752 tienen stock distinto de cero. Fuente del estado actual, no del costo histórico."
+        },
+        "stockmovi": {
+          "rows": 359853,
+          "reason": "359.853 movimientos, 22.272 modificados en 2026; todos encuentran nota. nprecio siempre cero."
+        },
+        "stocknotas": {
+          "rows": 93504,
+          "reason": "93.504 cabeceras; tipos E/S coinciden con Entradas/Salidas en el catálogo. Interpretar concepto junto al tipo."
+        },
+        "contenidoprenda": {
+          "rows": 94804,
+          "reason": "94.804 relaciones stock-campaña; ambas referencias tienen coincidencia completa. 12.286 modificaciones en 2026."
+        },
+        "campanarangos": {
+          "rows": 560,
+          "reason": "560 rangos y porcentajes, todos con campaña. Conservar reglas originales; validar su finalidad comercial."
+        },
+        "sventas": {
+          "rows": 7094,
+          "reason": "7.094 documentos, 140 fechados en 2026. Todos encuentran pedido y base + IGV = total en todas las filas; cobertura parcial de pedidos."
+        },
+        "personasaldos": {
+          "rows": 5614,
+          "reason": "5.614 movimientos, 258 fechados en 2026; todos con persona. 5.305 no tienen pedido informado."
+        },
+        "webubigeo": {
+          "rows": 2214,
+          "reason": "2.214 ubicaciones; 21.895 personas encuentran código. 12 códigos vacíos y uno sin coincidencia."
+        },
+        "webzonas": {
+          "rows": 4,
+          "reason": "4 zonas nombradas; 1.860 ubigeos las referencian y 354 tienen zona cero."
+        },
+        "webzonasdet": {
+          "rows": 2,
+          "reason": "2 relaciones válidas de zona/ubigeo. Conservar para investigar su función complementaria; no sustituir el mapa principal con ellas."
+        },
+        "webcostos": {
+          "rows": 11,
+          "reason": "11 tarifas por zona, rango de monto y tipo de envío. Todas las zonas existen y tipos 11/12/13 aparecen en pedidos; no hay vigencia temporal."
+        },
+        "webparametros": {
+          "rows": 931,
+          "reason": "931 registros y 37 grupos; incluye etiquetas de pedidos, tallas, colores y movimientos. La clave requiere grupo/tipo/valor."
+        },
+        "seccion": {
+          "rows": 55,
+          "reason": "55 secciones con nombres comerciales y editoriales. Conservar para aprovechar la clasificación explícita del catálogo."
+        },
+        "seccioncontenido": {
+          "rows": 2286,
+          "reason": "2.286 relaciones válidas con secciones; 2.256 productos existentes clasificados (43,8% del catálogo), 24 códigos en varias secciones."
+        },
+        "pagepagos": {
+          "rows": 9,
+          "reason": "9 medios/configuraciones de pago referenciados por 59.861 pedidos; los 21.224 restantes tienen código cero. No contiene transacciones."
+        },
+        "webmodulos": {
+          "rows": 3,
+          "reason": "3 módulos: Contenidos, Catalogo y Formularios. Los 5.148 registros de contenido encuentran módulo; permite separar dominios."
+        },
+        "documentofile": {
+          "rows": 23199,
+          "reason": "23.199 referencias a archivos, todas con pedido. Conservar metadatos para trazabilidad documental; no acredita pago ni descarga adjuntos."
+        }
+      },
+      "historical_only": {
+        "senvios": {
+          "rows": 448,
+          "reason": "448 registros con fechas únicamente de abril–mayo de 2019. Conservar una copia histórica; no usar como fuente de entregas actuales."
+        },
+        "personaventas": {
+          "rows": 451,
+          "reason": "451 filas de una sola campaña, del 2018-02-01 al 2018-03-24. Sin duplicados persona-campaña en esta copia; dos personas no existen. Resumen antiguo, no fuente vigente."
+        }
+      },
+      "exclude_commercial_pipeline": {
+        "contenidodetalle": {
+          "rows": 5140,
+          "reason": "5.140 filas; campos descriptivos vacíos. cdetcontenido no conserva texto visible al quitar HTML/espacios. No añade atributos comerciales en esta copia."
+        },
+        "contenidogaleria": {
+          "rows": 115,
+          "reason": "115 registros de imágenes/textos de galería, todos modificados en 2016. Fuera del análisis comercial actual; conservar en la copia exploratoria."
+        },
+        "documentotmp": {
+          "rows": 3,
+          "reason": "3 líneas de trabajo temporal con usuario, producto y cantidad. No tratarlas como pedidos confirmados."
+        },
+        "page": {
+          "rows": 1,
+          "reason": "1 registro de configuración del sitio: empresa, redes, presentación y opciones. No es una tabla de operaciones comerciales."
+        },
+        "pagedocs": {
+          "rows": 8,
+          "reason": "8 configuraciones de tipos/series/correlativos. Los documentos emitidos se obtienen de sventas/documento; no tratar correlativos como ventas."
+        },
+        "pagehome": {
+          "rows": 33,
+          "reason": "33 bloques de portada con diseño, enlaces, imágenes y opciones."
+        },
+        "pagehomedet": {
+          "rows": 138,
+          "reason": "138 asociaciones de bloques de portada y destinos."
+        },
+        "pagehomeitem": {
+          "rows": 8,
+          "reason": "8 elementos visuales de portada."
+        },
+        "pagehomesub": {
+          "rows": 10,
+          "reason": "10 subelementos con efectos, transformaciones y animaciones."
+        },
+        "pagemenu": {
+          "rows": 2,
+          "reason": "2 configuraciones de menú."
+        },
+        "personabuzon": {
+          "rows": 0,
+          "reason": "0 filas en la extracción; revisar si comienza a poblarse."
+        },
+        "personapage": {
+          "rows": 21909,
+          "reason": "21.909 asociaciones al sitio; ccodperfil vacío en todas y cdefperfil constante. No aporta segmentación comercial en esta copia."
+        },
+        "secciondetalle": {
+          "rows": 55,
+          "reason": "55 filas de contenido editorial adicional: solo 4 textos poblados; campos empresariales vacíos. La clasificación está en seccion/seccioncontenido."
+        },
+        "seccionmenu": {
+          "rows": 8,
+          "reason": "8 relaciones de navegación entre secciones y menús."
+        },
+        "spagos": {
+          "rows": 0,
+          "reason": "0 filas. No es fuente disponible de pagos; los datos actuales están en documento y sus catálogos."
+        },
+        "wsestilo": {
+          "rows": 1,
+          "reason": "1 configuración de estilos visuales con 69 columnas."
+        },
+        "wsestiloclases": {
+          "rows": 32,
+          "reason": "32 clases de presentación."
+        },
+        "wsestilocontenido": {
+          "rows": 12,
+          "reason": "12 configuraciones de presentación de contenido."
+        },
+        "wsestilofuentes": {
+          "rows": 11,
+          "reason": "11 fuentes de presentación."
+        },
+        "wsestiloseccion": {
+          "rows": 11,
+          "reason": "11 estilos de secciones."
+        },
+        "wsopciones": {
+          "rows": 51,
+          "reason": "51 opciones/rutas/permisos del sistema; no son eventos de actividad ni transacciones."
+        }
+      }
+    }
+  },
+  "evidence": {
+    "column_profiles": {
+      "campana": {
+        "ccodcampana": {
+          "populated": 174,
+          "distinct_populated": 174,
+          "nulls": 0
+        },
+        "cnomcampana": {
+          "populated": 174,
+          "distinct_populated": 173,
+          "nulls": 0
+        },
+        "ctipcampana": {
+          "populated": 174,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cestcampana": {
+          "populated": 174,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "dfecinicio": {
+          "populated": 174,
+          "distinct_populated": 169,
+          "nulls": 0
+        },
+        "dfecfinal": {
+          "populated": 174,
+          "distinct_populated": 158,
+          "nulls": 0
+        },
+        "cordcampana": {
+          "populated": 174,
+          "distinct_populated": 44,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 174,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 174,
+          "distinct_populated": 174,
+          "nulls": 0
+        }
+      },
+      "campanarangos": {
+        "idrango": {
+          "populated": 560,
+          "distinct_populated": 560,
+          "nulls": 0
+        },
+        "cnivrango": {
+          "populated": 560,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodcampana": {
+          "populated": 560,
+          "distinct_populated": 170,
+          "nulls": 0
+        },
+        "nmontoini": {
+          "populated": 560,
+          "distinct_populated": 25,
+          "nulls": 0
+        },
+        "nmontofin": {
+          "populated": 560,
+          "distinct_populated": 39,
+          "nulls": 0
+        },
+        "nporcentaje": {
+          "populated": 560,
+          "distinct_populated": 12,
+          "nulls": 0
+        }
+      },
+      "contenido": {
+        "ccodcontenido": {
+          "populated": 5148,
+          "distinct_populated": 5148,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 5147,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodpersona": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodmodulo": {
+          "populated": 5148,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodestcontenido": {
+          "populated": 5148,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cnomcontenido": {
+          "populated": 5148,
+          "distinct_populated": 5130,
+          "nulls": 0
+        },
+        "csubcontenido": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "camicontenido": {
+          "populated": 5148,
+          "distinct_populated": 5148,
+          "nulls": 0
+        },
+        "crescontenido": {
+          "populated": 2239,
+          "distinct_populated": 1773,
+          "nulls": 0
+        },
+        "ctagcontenido": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cimgcontenido": {
+          "populated": 9,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "cbancontenido": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cestcontenido": {
+          "populated": 5148,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "estienda": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodcategoria": {
+          "populated": 5148,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ctipoperacion": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ctipcontenido": {
+          "populated": 5148,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "ctipenlace": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "curlenlace": {
+          "populated": 9,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "ccodinterno": {
+          "populated": 5111,
+          "distinct_populated": 5020,
+          "nulls": 0
+        },
+        "ccodmoneda": {
+          "populated": 5137,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodunidad": {
+          "populated": 5137,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "nprecompra": {
+          "populated": 5148,
+          "distinct_populated": 60,
+          "nulls": 0
+        },
+        "npreproducto": {
+          "populated": 5148,
+          "distinct_populated": 196,
+          "nulls": 0
+        },
+        "npremayor": {
+          "populated": 5148,
+          "distinct_populated": 79,
+          "nulls": 0
+        },
+        "nstoproducto": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "catrproducto": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 5094
+        },
+        "cestproducto": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cestcomentario": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "copccontenido": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "copcpaquete": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "copcinmueble": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ndiapaquete": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "nareainmueble": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nconsinmueble": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nviscontenido": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "dfecinicio": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "dfecfin": {
+          "populated": 5148,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "dfeccontenido": {
+          "populated": 5148,
+          "distinct_populated": 328,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 5148,
+          "distinct_populated": 10,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 5148,
+          "distinct_populated": 5148,
+          "nulls": 0
+        }
+      },
+      "contenidodetalle": {
+        "ccoddetalle": {
+          "populated": 5140,
+          "distinct_populated": 5140,
+          "nulls": 0
+        },
+        "ccodcontenido": {
+          "populated": 5140,
+          "distinct_populated": 5140,
+          "nulls": 0
+        },
+        "cnomdetalle": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cresdetalle": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cimgdetalle": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cdetcontenido": {
+          "populated": 40,
+          "distinct_populated": 12,
+          "nulls": 0
+        },
+        "ctxtcontenido": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "curldetalle": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "corddetalle": {
+          "populated": 5140,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "contenidogaleria": {
+        "ccodgaleria": {
+          "populated": 115,
+          "distinct_populated": 115,
+          "nulls": 0
+        },
+        "ccodcontenido": {
+          "populated": 115,
+          "distinct_populated": 102,
+          "nulls": 0
+        },
+        "cnomgaleria": {
+          "populated": 105,
+          "distinct_populated": 102,
+          "nulls": 0
+        },
+        "cdesgaleria": {
+          "populated": 105,
+          "distinct_populated": 94,
+          "nulls": 0
+        },
+        "cimggaleria": {
+          "populated": 115,
+          "distinct_populated": 115,
+          "nulls": 0
+        },
+        "ccodclase": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cordgaleria": {
+          "populated": 115,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 115,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 115,
+          "distinct_populated": 2,
+          "nulls": 0
+        }
+      },
+      "contenidoprenda": {
+        "ccodstock": {
+          "populated": 94804,
+          "distinct_populated": 18428,
+          "nulls": 0
+        },
+        "ccodcampana": {
+          "populated": 94804,
+          "distinct_populated": 174,
+          "nulls": 0
+        },
+        "npagpublica": {
+          "populated": 32565,
+          "distinct_populated": 270,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 94804,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 94804,
+          "distinct_populated": 29688,
+          "nulls": 0
+        },
+        "cestado": {
+          "populated": 94804,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "documento": {
+        "ccodpedido": {
+          "populated": 81085,
+          "distinct_populated": 81085,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ccodcampana": {
+          "populated": 81085,
+          "distinct_populated": 171,
+          "nulls": 0
+        },
+        "ccodcliente": {
+          "populated": 81085,
+          "distinct_populated": 13870,
+          "nulls": 0
+        },
+        "ccodlider": {
+          "populated": 81085,
+          "distinct_populated": 210,
+          "nulls": 0
+        },
+        "cestpedido": {
+          "populated": 81085,
+          "distinct_populated": 7,
+          "nulls": 0
+        },
+        "dfecpedido": {
+          "populated": 81085,
+          "distinct_populated": 3536,
+          "nulls": 0
+        },
+        "nmonpedido": {
+          "populated": 81085,
+          "distinct_populated": 12129,
+          "nulls": 0
+        },
+        "nmoncomision": {
+          "populated": 81085,
+          "distinct_populated": 10441,
+          "nulls": 0
+        },
+        "nmonenvio": {
+          "populated": 81085,
+          "distinct_populated": 16,
+          "nulls": 0
+        },
+        "nmonpago": {
+          "populated": 81085,
+          "distinct_populated": 24779,
+          "nulls": 0
+        },
+        "nporpago": {
+          "populated": 81085,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nmondevuelto": {
+          "populated": 81085,
+          "distinct_populated": 359,
+          "nulls": 0
+        },
+        "ctipenvio": {
+          "populated": 81085,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cdespedido": {
+          "populated": 184,
+          "distinct_populated": 165,
+          "nulls": 0
+        },
+        "dfecpago": {
+          "populated": 81085,
+          "distinct_populated": 3223,
+          "nulls": 0
+        },
+        "ccodpago": {
+          "populated": 81085,
+          "distinct_populated": 10,
+          "nulls": 0
+        },
+        "copepago": {
+          "populated": 57488,
+          "distinct_populated": 46945,
+          "nulls": 0
+        },
+        "nsalpago": {
+          "populated": 81085,
+          "distinct_populated": 2939,
+          "nulls": 0
+        },
+        "dfecconfirma": {
+          "populated": 81085,
+          "distinct_populated": 3064,
+          "nulls": 0
+        },
+        "cclifactura": {
+          "populated": 81085,
+          "distinct_populated": 11947,
+          "nulls": 0
+        },
+        "dfecfactura": {
+          "populated": 81085,
+          "distinct_populated": 3051,
+          "nulls": 0
+        },
+        "ctipfactura": {
+          "populated": 59850,
+          "distinct_populated": 7,
+          "nulls": 0
+        },
+        "cserfactura": {
+          "populated": 58463,
+          "distinct_populated": 165,
+          "nulls": 0
+        },
+        "cnrofactura": {
+          "populated": 56991,
+          "distinct_populated": 50158,
+          "nulls": 0
+        },
+        "dfecentrega": {
+          "populated": 81085,
+          "distinct_populated": 2668,
+          "nulls": 0
+        },
+        "ctipentrega": {
+          "populated": 43717,
+          "distinct_populated": 2,
+          "nulls": 37368
+        },
+        "cdocentrega": {
+          "populated": 16925,
+          "distinct_populated": 1624,
+          "nulls": 63177
+        },
+        "dfecdevolucion": {
+          "populated": 24714,
+          "distinct_populated": 254,
+          "nulls": 56371
+        },
+        "cestcredito": {
+          "populated": 81085,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cserncredito": {
+          "populated": 214,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnumncredito": {
+          "populated": 214,
+          "distinct_populated": 214,
+          "nulls": 0
+        },
+        "dfecncredito": {
+          "populated": 81085,
+          "distinct_populated": 118,
+          "nulls": 0
+        },
+        "ccodnota": {
+          "populated": 81085,
+          "distinct_populated": 51281,
+          "nulls": 0
+        },
+        "dfecanulacion": {
+          "populated": 81085,
+          "distinct_populated": 2963,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 81085,
+          "distinct_populated": 31,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 81085,
+          "distinct_populated": 80896,
+          "nulls": 0
+        }
+      },
+      "documentodetalle": {
+        "idpedido": {
+          "populated": 424953,
+          "distinct_populated": 424953,
+          "nulls": 0
+        },
+        "ccodpedido": {
+          "populated": 424953,
+          "distinct_populated": 80578,
+          "nulls": 0
+        },
+        "ccodcontenido": {
+          "populated": 424953,
+          "distinct_populated": 5420,
+          "nulls": 0
+        },
+        "ccodcolor": {
+          "populated": 424953,
+          "distinct_populated": 274,
+          "nulls": 0
+        },
+        "ccodtalla": {
+          "populated": 424953,
+          "distinct_populated": 54,
+          "nulls": 0
+        },
+        "cnomunidad": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ccategoria": {
+          "populated": 424953,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ncantidad": {
+          "populated": 424953,
+          "distinct_populated": 53,
+          "nulls": 0
+        },
+        "nprecio": {
+          "populated": 424953,
+          "distinct_populated": 300,
+          "nulls": 0
+        },
+        "nprepromo": {
+          "populated": 424953,
+          "distinct_populated": 124,
+          "nulls": 0
+        },
+        "nimporte": {
+          "populated": 424953,
+          "distinct_populated": 910,
+          "nulls": 0
+        },
+        "wstotal": {
+          "populated": 424953,
+          "distinct_populated": 67,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 424953,
+          "distinct_populated": 2087,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 424953,
+          "distinct_populated": 183314,
+          "nulls": 0
+        },
+        "estado": {
+          "populated": 424953,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "documentofile": {
+        "ccodfile": {
+          "populated": 23199,
+          "distinct_populated": 23199,
+          "nulls": 0
+        },
+        "ccodpedido": {
+          "populated": 23199,
+          "distinct_populated": 23055,
+          "nulls": 0
+        },
+        "cnomfile": {
+          "populated": 23199,
+          "distinct_populated": 23199,
+          "nulls": 0
+        }
+      },
+      "documentotmp": {
+        "idpedido": {
+          "populated": 3,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "ccodcontenido": {
+          "populated": 3,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "ccodcolor": {
+          "populated": 3,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodtalla": {
+          "populated": 3,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ncantidad": {
+          "populated": 3,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 3,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "page": {
+        "ccodpage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnompage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodidioma": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "camipage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ckeypage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodplan": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cestpage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cestsistema": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ctitpage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ctagpage": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cdespage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cpiepage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cterminos": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cnomempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "crucempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cdesempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cdirempresa": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodubigeo": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "clatmapa": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "clonmapa": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "clogo": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cfavicon": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "curlfacebook": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "curlgoogle": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "curltwitter": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "curlyoutube": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "curllinkedin": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "curlinstagram": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "curlpinterest": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ctelempresa": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cmovempresa": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cemacontactos": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cemaventas": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nmosprice": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nmoscart": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nmosuser": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodmoneda": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ndiaactivo": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodplantilla": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "pageestilo": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nvispage": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "canagoogle": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cwebgoogle": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        }
+      },
+      "pagedocs": {
+        "ccoddocu": {
+          "populated": 8,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 8,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ctipdocu": {
+          "populated": 8,
+          "distinct_populated": 5,
+          "nulls": 0
+        },
+        "cserdocu": {
+          "populated": 8,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cnrodocu": {
+          "populated": 8,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "cestadocu": {
+          "populated": 8,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cestflag": {
+          "populated": 8,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "pagehome": {
+        "ccodinicio": {
+          "populated": 33,
+          "distinct_populated": 33,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 33,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnomhome": {
+          "populated": 33,
+          "distinct_populated": 33,
+          "nulls": 0
+        },
+        "ccodclase": {
+          "populated": 33,
+          "distinct_populated": 5,
+          "nulls": 0
+        },
+        "cclamovil": {
+          "populated": 2,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodcss": {
+          "populated": 33,
+          "distinct_populated": 6,
+          "nulls": 0
+        },
+        "cfoncss": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cmarizq": {
+          "populated": 32,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cmarder": {
+          "populated": 32,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cmarsup": {
+          "populated": 32,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cmarinf": {
+          "populated": 32,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cinctitulo": {
+          "populated": 33,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cesthome": {
+          "populated": 33,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ctiphome": {
+          "populated": 33,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cimgpubli": {
+          "populated": 5,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "nancho": {
+          "populated": 4,
+          "distinct_populated": 1,
+          "nulls": 29
+        },
+        "nalto": {
+          "populated": 4,
+          "distinct_populated": 2,
+          "nulls": 29
+        },
+        "curlpubli": {
+          "populated": 8,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "curlopen": {
+          "populated": 9,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cadspubli": {
+          "populated": 17,
+          "distinct_populated": 17,
+          "nulls": 0
+        },
+        "ccodestilo": {
+          "populated": 7,
+          "distinct_populated": 2,
+          "nulls": 26
+        },
+        "ccodmodulo": {
+          "populated": 7,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodseccion": {
+          "populated": 7,
+          "distinct_populated": 6,
+          "nulls": 26
+        },
+        "ccodcategoria": {
+          "populated": 7,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodapps": {
+          "populated": 33,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nnroitems": {
+          "populated": 33,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "nnrocols": {
+          "populated": 7,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodorden": {
+          "populated": 7,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cubidestino": {
+          "populated": 33,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cordpublica": {
+          "populated": 33,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "cincbox": {
+          "populated": 16,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "copciones": {
+          "populated": 33,
+          "distinct_populated": 5,
+          "nulls": 0
+        },
+        "dfecinicio": {
+          "populated": 33,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "dfecfinal": {
+          "populated": 33,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "anchowin": {
+          "populated": 33,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "altowin": {
+          "populated": 33,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "dfechome": {
+          "populated": 33,
+          "distinct_populated": 11,
+          "nulls": 0
+        }
+      },
+      "pagehomedet": {
+        "ccodinicio": {
+          "populated": 138,
+          "distinct_populated": 33,
+          "nulls": 0
+        },
+        "ccoddestino": {
+          "populated": 138,
+          "distinct_populated": 54,
+          "nulls": 0
+        }
+      },
+      "pagehomeitem": {
+        "ccoditem": {
+          "populated": 8,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "ccodinicio": {
+          "populated": 8,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cnomitem": {
+          "populated": 8,
+          "distinct_populated": 7,
+          "nulls": 0
+        },
+        "cimgitem": {
+          "populated": 8,
+          "distinct_populated": 7,
+          "nulls": 0
+        },
+        "ctranitem": {
+          "populated": 8,
+          "distinct_populated": 5,
+          "nulls": 0
+        },
+        "cduraitem": {
+          "populated": 8,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cestitem": {
+          "populated": 8,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "corditem": {
+          "populated": 8,
+          "distinct_populated": 3,
+          "nulls": 0
+        }
+      },
+      "pagehomesub": {
+        "ccodsub": {
+          "populated": 10,
+          "distinct_populated": 10,
+          "nulls": 0
+        },
+        "ccoditem": {
+          "populated": 10,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "cnomsub": {
+          "populated": 10,
+          "distinct_populated": 6,
+          "nulls": 0
+        },
+        "ctipsub": {
+          "populated": 10,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cincsub": {
+          "populated": 10,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "ccodclase": {
+          "populated": 10,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "curlsub": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cversub": {
+          "populated": 8,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "chorsub": {
+          "populated": 10,
+          "distinct_populated": 6,
+          "nulls": 0
+        },
+        "cestsub": {
+          "populated": 10,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cordsub": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cdursub": {
+          "populated": 4,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cduranima": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "offsetxin": {
+          "populated": 6,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "offsetyin": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "fadein": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "durationin": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "easingin": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "rotatein": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "rotateXin": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "rotateYin": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "scalexin": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "scaleyin": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "skewxin": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "skewyin": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "transformoriginin": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "offsetxout": {
+          "populated": 6,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "offsetyout": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "fadeout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "durationout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "easingout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "rotateout": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "rotateXout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "rotateYout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "scalexout": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "scaleyout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "skewxout": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "skewyout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "transformoriginout": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        }
+      },
+      "pagemenu": {
+        "ccodmenu": {
+          "populated": 2,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 2,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnommenu": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cubimenu": {
+          "populated": 2,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cclamenu": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cestmenu": {
+          "populated": 2,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cmenuorden": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        }
+      },
+      "pagepagos": {
+        "ccodpagos": {
+          "populated": 9,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 9,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnompagos": {
+          "populated": 9,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "ctippago": {
+          "populated": 9,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodmoneda": {
+          "populated": 9,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnrocuenta": {
+          "populated": 6,
+          "distinct_populated": 6,
+          "nulls": 0
+        },
+        "ctitcuenta": {
+          "populated": 6,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cdespagos": {
+          "populated": 3,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ncomision": {
+          "populated": 9,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "idcomercio": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "idemail": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cestpagos": {
+          "populated": 9,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "persona": {
+        "ccodpersona": {
+          "populated": 21908,
+          "distinct_populated": 21908,
+          "nulls": 0
+        },
+        "cnompersona": {
+          "populated": 21908,
+          "distinct_populated": 21822,
+          "nulls": 0
+        },
+        "cemapersona": {
+          "populated": 21908,
+          "distinct_populated": 21908,
+          "nulls": 0
+        },
+        "cnikpersona": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cpaspersona": {
+          "populated": 21908,
+          "distinct_populated": 16364,
+          "nulls": 0
+        },
+        "cnivpersona": {
+          "populated": 21908,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "cestpersona": {
+          "populated": 21908,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cestsuscripcion": {
+          "populated": 21908,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "csexpersona": {
+          "populated": 21908,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "ccodgrupo": {
+          "populated": 45,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "ctipdocumento": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 21907
+        },
+        "cdnipersona": {
+          "populated": 21906,
+          "distinct_populated": 21873,
+          "nulls": 0
+        },
+        "crucpersona": {
+          "populated": 89,
+          "distinct_populated": 88,
+          "nulls": 7696
+        },
+        "crazempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 21908
+        },
+        "cdirempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 21908
+        },
+        "cubiempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 21908
+        },
+        "dnacpersona": {
+          "populated": 21908,
+          "distinct_populated": 6754,
+          "nulls": 0
+        },
+        "cimgpersona": {
+          "populated": 10281,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodpostal": {
+          "populated": 54,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "ccodubigeo": {
+          "populated": 21896,
+          "distinct_populated": 669,
+          "nulls": 0
+        },
+        "cnomzona": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cdireccion": {
+          "populated": 18791,
+          "distinct_populated": 17831,
+          "nulls": 0
+        },
+        "creferencia": {
+          "populated": 9296,
+          "distinct_populated": 8541,
+          "nulls": 0
+        },
+        "ntelefono": {
+          "populated": 5789,
+          "distinct_populated": 5394,
+          "nulls": 0
+        },
+        "ntelefono2": {
+          "populated": 1595,
+          "distinct_populated": 1429,
+          "nulls": 0
+        },
+        "nmovil": {
+          "populated": 18769,
+          "distinct_populated": 17995,
+          "nulls": 0
+        },
+        "nmovil2": {
+          "populated": 6856,
+          "distinct_populated": 6607,
+          "nulls": 0
+        },
+        "nsalfavor": {
+          "populated": 21908,
+          "distinct_populated": 167,
+          "nulls": 0
+        },
+        "ccodidioma": {
+          "populated": 21907,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodrelacion": {
+          "populated": 21908,
+          "distinct_populated": 1239,
+          "nulls": 0
+        },
+        "ccodrelacion2": {
+          "populated": 21908,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodasesor": {
+          "populated": 21908,
+          "distinct_populated": 13,
+          "nulls": 0
+        },
+        "cclifactura": {
+          "populated": 21908,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nvispersona": {
+          "populated": 21908,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodautenticacion": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "dlogpersona": {
+          "populated": 21908,
+          "distinct_populated": 215,
+          "nulls": 0
+        },
+        "dfecpersona": {
+          "populated": 21907,
+          "distinct_populated": 3055,
+          "nulls": 1
+        },
+        "dfecmodifica": {
+          "populated": 21908,
+          "distinct_populated": 21905,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 21908,
+          "distinct_populated": 685,
+          "nulls": 0
+        }
+      },
+      "personabuzon": {},
+      "personapage": {
+        "ccodpersona": {
+          "populated": 21909,
+          "distinct_populated": 21908,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 21895,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ccodperfil": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cdefperfil": {
+          "populated": 21909,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "personasaldos": {
+        "ccodsaldo": {
+          "populated": 5614,
+          "distinct_populated": 5614,
+          "nulls": 0
+        },
+        "ccodpersona": {
+          "populated": 5614,
+          "distinct_populated": 1471,
+          "nulls": 0
+        },
+        "dfecsaldo": {
+          "populated": 5614,
+          "distinct_populated": 1718,
+          "nulls": 0
+        },
+        "nmonsaldo": {
+          "populated": 5614,
+          "distinct_populated": 3352,
+          "nulls": 0
+        },
+        "ccodoperacion": {
+          "populated": 5614,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "ccodpedido": {
+          "populated": 309,
+          "distinct_populated": 300,
+          "nulls": 5305
+        },
+        "cperrelacion": {
+          "populated": 1630,
+          "distinct_populated": 597,
+          "nulls": 3984
+        },
+        "cdessaldo": {
+          "populated": 4921,
+          "distinct_populated": 2923,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 5614,
+          "distinct_populated": 12,
+          "nulls": 0
+        }
+      },
+      "personaventas": {
+        "ccodpersona": {
+          "populated": 451,
+          "distinct_populated": 451,
+          "nulls": 0
+        },
+        "ccodcampana": {
+          "populated": 451,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nnropedemp": {
+          "populated": 451,
+          "distinct_populated": 6,
+          "nulls": 0
+        },
+        "nmonpedemp": {
+          "populated": 451,
+          "distinct_populated": 429,
+          "nulls": 0
+        },
+        "nnropedlid": {
+          "populated": 451,
+          "distinct_populated": 12,
+          "nulls": 0
+        },
+        "nmonpedlid": {
+          "populated": 451,
+          "distinct_populated": 64,
+          "nulls": 0
+        }
+      },
+      "seccion": {
+        "ccodseccion": {
+          "populated": 55,
+          "distinct_populated": 55,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 55,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodmodulo": {
+          "populated": 55,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "ccodsecestilo": {
+          "populated": 55,
+          "distinct_populated": 5,
+          "nulls": 0
+        },
+        "ccodsubestilo": {
+          "populated": 53,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnomseccion": {
+          "populated": 55,
+          "distinct_populated": 55,
+          "nulls": 0
+        },
+        "camiseccion": {
+          "populated": 55,
+          "distinct_populated": 55,
+          "nulls": 0
+        },
+        "ctitseccion": {
+          "populated": 45,
+          "distinct_populated": 45,
+          "nulls": 0
+        },
+        "cdesseccion": {
+          "populated": 43,
+          "distinct_populated": 43,
+          "nulls": 0
+        },
+        "ctagseccion": {
+          "populated": 43,
+          "distinct_populated": 43,
+          "nulls": 0
+        },
+        "cimgseccion": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cbanseccion": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cestseccion": {
+          "populated": 55,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnivseccion": {
+          "populated": 55,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "ctipseccion": {
+          "populated": 55,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "curlseccion": {
+          "populated": 2,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "curldestino": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ctipmenu": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cpagseccion": {
+          "populated": 55,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cordcontenido": {
+          "populated": 55,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cordseccion": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ccodcategoria": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "nvisseccion": {
+          "populated": 55,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "ccodclase": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ccodefecto": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ctipmenubar": {
+          "populated": 51,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ctipmenulat": {
+          "populated": 51,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "copcseccion": {
+          "populated": 55,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "seccionestilo": {
+          "populated": 55,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "contenidoestilo": {
+          "populated": 55,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "contenidocolumna": {
+          "populated": 55,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "dfecseccion": {
+          "populated": 55,
+          "distinct_populated": 19,
+          "nulls": 0
+        },
+        "ccodpersona": {
+          "populated": 55,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 55,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 55,
+          "distinct_populated": 55,
+          "nulls": 0
+        }
+      },
+      "seccioncontenido": {
+        "ccodpage": {
+          "populated": 2286,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodseccion": {
+          "populated": 2286,
+          "distinct_populated": 46,
+          "nulls": 0
+        },
+        "ccodcontenido": {
+          "populated": 2286,
+          "distinct_populated": 2262,
+          "nulls": 0
+        },
+        "cordcontenido": {
+          "populated": 2286,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "estienda": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        }
+      },
+      "secciondetalle": {
+        "ccodseccion": {
+          "populated": 55,
+          "distinct_populated": 55,
+          "nulls": 0
+        },
+        "cnombre": {
+          "populated": 3,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cdetseccion": {
+          "populated": 4,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "crucempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "crazempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cemaempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cwebempresa": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 55,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 55,
+          "distinct_populated": 5,
+          "nulls": 0
+        }
+      },
+      "seccionmenu": {
+        "ccodseccion": {
+          "populated": 8,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "ccodmenu": {
+          "populated": 8,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cclamenu": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cordmenu": {
+          "populated": 8,
+          "distinct_populated": 8,
+          "nulls": 0
+        }
+      },
+      "senvios": {
+        "ccodenvio": {
+          "populated": 448,
+          "distinct_populated": 448,
+          "nulls": 0
+        },
+        "cserguia": {
+          "populated": 448,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnumguia": {
+          "populated": 444,
+          "distinct_populated": 436,
+          "nulls": 0
+        },
+        "ccodpersona": {
+          "populated": 448,
+          "distinct_populated": 277,
+          "nulls": 0
+        },
+        "ccodagencia": {
+          "populated": 448,
+          "distinct_populated": 29,
+          "nulls": 0
+        },
+        "csergagencia": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cnumgagencia": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ctipdocumento": {
+          "populated": 444,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cserdocumento": {
+          "populated": 445,
+          "distinct_populated": 70,
+          "nulls": 0
+        },
+        "cnumdocumento": {
+          "populated": 446,
+          "distinct_populated": 393,
+          "nulls": 0
+        },
+        "ncosenvio": {
+          "populated": 448,
+          "distinct_populated": 46,
+          "nulls": 0
+        },
+        "dfecenvio": {
+          "populated": 448,
+          "distinct_populated": 33,
+          "nulls": 0
+        },
+        "dfecdocumento": {
+          "populated": 448,
+          "distinct_populated": 33,
+          "nulls": 0
+        },
+        "cestenvio": {
+          "populated": 448,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "spagos": {},
+      "stockcontrol": {
+        "ccodstock": {
+          "populated": 18938,
+          "distinct_populated": 18938,
+          "nulls": 0
+        },
+        "ccodcontenido": {
+          "populated": 18938,
+          "distinct_populated": 5726,
+          "nulls": 0
+        },
+        "ccodcolor": {
+          "populated": 18893,
+          "distinct_populated": 280,
+          "nulls": 0
+        },
+        "ccodtalla": {
+          "populated": 18938,
+          "distinct_populated": 59,
+          "nulls": 0
+        },
+        "nstock": {
+          "populated": 18938,
+          "distinct_populated": 133,
+          "nulls": 0
+        },
+        "nstockrete": {
+          "populated": 18938,
+          "distinct_populated": 16,
+          "nulls": 0
+        },
+        "nstockmin": {
+          "populated": 18938,
+          "distinct_populated": 13,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 18938,
+          "distinct_populated": 12,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 18938,
+          "distinct_populated": 13426,
+          "nulls": 0
+        }
+      },
+      "stockmovi": {
+        "ccodmovi": {
+          "populated": 359853,
+          "distinct_populated": 359853,
+          "nulls": 0
+        },
+        "ccodnota": {
+          "populated": 359853,
+          "distinct_populated": 93503,
+          "nulls": 0
+        },
+        "ccodcontenido": {
+          "populated": 359853,
+          "distinct_populated": 4795,
+          "nulls": 0
+        },
+        "ccodcolor": {
+          "populated": 359853,
+          "distinct_populated": 262,
+          "nulls": 0
+        },
+        "ccodtalla": {
+          "populated": 359853,
+          "distinct_populated": 55,
+          "nulls": 0
+        },
+        "ncantidad": {
+          "populated": 359853,
+          "distinct_populated": 157,
+          "nulls": 0
+        },
+        "nprecio": {
+          "populated": 359853,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nstock": {
+          "populated": 359853,
+          "distinct_populated": 728,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 359853,
+          "distinct_populated": 21,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 359853,
+          "distinct_populated": 93590,
+          "nulls": 0
+        },
+        "estado": {
+          "populated": 359853,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "stocknotas": {
+        "ccodnota": {
+          "populated": 93504,
+          "distinct_populated": 93504,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ctipnota": {
+          "populated": 93504,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cconnota": {
+          "populated": 93504,
+          "distinct_populated": 10,
+          "nulls": 0
+        },
+        "dfecnota": {
+          "populated": 93504,
+          "distinct_populated": 2919,
+          "nulls": 0
+        },
+        "nmonnota": {
+          "populated": 93504,
+          "distinct_populated": 330,
+          "nulls": 0
+        },
+        "ccodpersona": {
+          "populated": 93504,
+          "distinct_populated": 10015,
+          "nulls": 0
+        },
+        "cnroguia": {
+          "populated": 2,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cordcompra": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ccodpedido": {
+          "populated": 93504,
+          "distinct_populated": 46820,
+          "nulls": 0
+        },
+        "cestnota": {
+          "populated": 93504,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cdesnota": {
+          "populated": 7941,
+          "distinct_populated": 4745,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 93504,
+          "distinct_populated": 21,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 93504,
+          "distinct_populated": 93328,
+          "nulls": 0
+        }
+      },
+      "sventas": {
+        "ccodventas": {
+          "populated": 7094,
+          "distinct_populated": 7094,
+          "nulls": 0
+        },
+        "ctipdoc": {
+          "populated": 7094,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cserdoc": {
+          "populated": 7087,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cnumdoc": {
+          "populated": 7087,
+          "distinct_populated": 6676,
+          "nulls": 0
+        },
+        "curldocumento": {
+          "populated": 7094,
+          "distinct_populated": 7088,
+          "nulls": 0
+        },
+        "cestdoc": {
+          "populated": 7094,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodmoneda": {
+          "populated": 7094,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "nmonventa": {
+          "populated": 7094,
+          "distinct_populated": 4966,
+          "nulls": 0
+        },
+        "nmonigv": {
+          "populated": 7094,
+          "distinct_populated": 3774,
+          "nulls": 0
+        },
+        "nmontotal": {
+          "populated": 7094,
+          "distinct_populated": 5042,
+          "nulls": 0
+        },
+        "ccodcliente": {
+          "populated": 7094,
+          "distinct_populated": 3068,
+          "nulls": 0
+        },
+        "cfacruc": {
+          "populated": 411,
+          "distinct_populated": 113,
+          "nulls": 0
+        },
+        "cfacraz": {
+          "populated": 411,
+          "distinct_populated": 136,
+          "nulls": 0
+        },
+        "cfacdir": {
+          "populated": 418,
+          "distinct_populated": 165,
+          "nulls": 0
+        },
+        "cfacubi": {
+          "populated": 411,
+          "distinct_populated": 100,
+          "nulls": 0
+        },
+        "ccodpedido": {
+          "populated": 7094,
+          "distinct_populated": 7086,
+          "nulls": 0
+        },
+        "dfecventa": {
+          "populated": 7094,
+          "distinct_populated": 1712,
+          "nulls": 0
+        }
+      },
+      "webcostos": {
+        "ccodcosto": {
+          "populated": 11,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "ccodzona": {
+          "populated": 11,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "ctipenvio": {
+          "populated": 11,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "nminmonto": {
+          "populated": 11,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "nmaxmonto": {
+          "populated": 11,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "ncosenvio": {
+          "populated": 11,
+          "distinct_populated": 6,
+          "nulls": 0
+        }
+      },
+      "webmodulos": {
+        "ccodmodulo": {
+          "populated": 3,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cnommodulo": {
+          "populated": 3,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cestmodulo": {
+          "populated": 3,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "webparametros": {
+        "ccodparametro": {
+          "populated": 931,
+          "distinct_populated": 37,
+          "nulls": 0
+        },
+        "ctipparametro": {
+          "populated": 931,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cvalparametro": {
+          "populated": 893,
+          "distinct_populated": 475,
+          "nulls": 0
+        },
+        "cestparametro": {
+          "populated": 931,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnombrees": {
+          "populated": 926,
+          "distinct_populated": 781,
+          "nulls": 0
+        },
+        "cnombreen": {
+          "populated": 75,
+          "distinct_populated": 74,
+          "nulls": 0
+        },
+        "cnombreit": {
+          "populated": 3,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cnombrefr": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cnombrede": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "csimbolo": {
+          "populated": 32,
+          "distinct_populated": 32,
+          "nulls": 0
+        },
+        "cimgparametro": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cadmparametro": {
+          "populated": 931,
+          "distinct_populated": 2,
+          "nulls": 0
+        }
+      },
+      "webubigeo": {
+        "ccodubigeo": {
+          "populated": 2214,
+          "distinct_populated": 2214,
+          "nulls": 0
+        },
+        "cnivubigeo": {
+          "populated": 2214,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cnomubigeo": {
+          "populated": 2214,
+          "distinct_populated": 2079,
+          "nulls": 0
+        },
+        "cestubigeo": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "ccodzona": {
+          "populated": 2214,
+          "distinct_populated": 5,
+          "nulls": 0
+        }
+      },
+      "webzonas": {
+        "ccodzona": {
+          "populated": 4,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 4,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnomzona": {
+          "populated": 4,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cdeszona": {
+          "populated": 4,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cestzona": {
+          "populated": 4,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "webzonasdet": {
+        "ccodzona": {
+          "populated": 2,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodubigeo": {
+          "populated": 2,
+          "distinct_populated": 2,
+          "nulls": 0
+        }
+      },
+      "wsestilo": {
+        "ccodplantilla": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cnomplantilla": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "crutaplan": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cestplantilla": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cimgplantilla": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodpage": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cccsplantilla": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webfondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webfondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "webfondorepetir": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webtexto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webtextoenlace": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webtextoactive": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webh1": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webh2": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webh3": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webmsup": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "webminf": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "headfondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "headfondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cabeceralogofloat": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceratopfull": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceratopalto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceratopfondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceratopfondoimagen": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceralogofull": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceralogoalto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceralogofondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabeceralogofondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cabemenufull": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabemenualto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabemenufondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabemenufondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cabecontenidofull": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cabecontenidofondocolor": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cabecontenidofondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cuerpofull": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cuerpofondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cuerpofondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "footerfondocolor": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "footerfondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "piecontenidofull": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "piecontenidofondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "piecontenidofondoimagen": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "piefull": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "piealto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "piefondocolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "piefondoimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menusupalinea": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menusupmizq": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menusupmder": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menusupancho": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menusupalto": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menusupbarcolor": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menusupbarimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menusupcolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menusupimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menusuptexto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menusupactcolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menusupactimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menusupacttexto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menutopsubcolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menutopsubimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menutopsubtexto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menutopsubactcolor": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "menutopsubactimagen": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "menutopsubacttexto": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "ccodusuario": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "dfecmodifica": {
+          "populated": 1,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "wsestiloclases": {
+        "ccodclase": {
+          "populated": 32,
+          "distinct_populated": 32,
+          "nulls": 0
+        },
+        "ctipclase": {
+          "populated": 32,
+          "distinct_populated": 5,
+          "nulls": 0
+        },
+        "cnomclase": {
+          "populated": 32,
+          "distinct_populated": 32,
+          "nulls": 0
+        }
+      },
+      "wsestilocontenido": {
+        "ccodestcontenido": {
+          "populated": 12,
+          "distinct_populated": 12,
+          "nulls": 0
+        },
+        "ccodmodulo": {
+          "populated": 12,
+          "distinct_populated": 7,
+          "nulls": 0
+        },
+        "cnomestcontenido": {
+          "populated": 12,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "cimgestcontenido": {
+          "populated": 12,
+          "distinct_populated": 4,
+          "nulls": 0
+        },
+        "cestestcontenido": {
+          "populated": 12,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cincestcontenido": {
+          "populated": 12,
+          "distinct_populated": 12,
+          "nulls": 0
+        }
+      },
+      "wsestilofuentes": {
+        "ccodfuente": {
+          "populated": 11,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "cnomfuente": {
+          "populated": 11,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "curlfuente": {
+          "populated": 11,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "cclafuente": {
+          "populated": 11,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "cestfuente": {
+          "populated": 11,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      },
+      "wsestiloseccion": {
+        "ccodsecestilo": {
+          "populated": 11,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "cnomsecestilo": {
+          "populated": 11,
+          "distinct_populated": 8,
+          "nulls": 0
+        },
+        "cimgsecestilo": {
+          "populated": 11,
+          "distinct_populated": 7,
+          "nulls": 0
+        },
+        "cestsecestilo": {
+          "populated": 11,
+          "distinct_populated": 1,
+          "nulls": 0
+        },
+        "cincsecestilo": {
+          "populated": 11,
+          "distinct_populated": 11,
+          "nulls": 0
+        },
+        "ccodmodulo": {
+          "populated": 11,
+          "distinct_populated": 4,
+          "nulls": 0
+        }
+      },
+      "wsopciones": {
+        "ccodopcion": {
+          "populated": 51,
+          "distinct_populated": 51,
+          "nulls": 0
+        },
+        "cnomopcion": {
+          "populated": 51,
+          "distinct_populated": 50,
+          "nulls": 0
+        },
+        "camiopcion": {
+          "populated": 0,
+          "distinct_populated": 0,
+          "nulls": 0
+        },
+        "cphpopcion": {
+          "populated": 45,
+          "distinct_populated": 44,
+          "nulls": 0
+        },
+        "cicoopcion": {
+          "populated": 12,
+          "distinct_populated": 6,
+          "nulls": 0
+        },
+        "cnivopcion": {
+          "populated": 51,
+          "distinct_populated": 3,
+          "nulls": 0
+        },
+        "cadmopcion": {
+          "populated": 51,
+          "distinct_populated": 2,
+          "nulls": 0
+        },
+        "cperopcion": {
+          "populated": 51,
+          "distinct_populated": 9,
+          "nulls": 0
+        },
+        "cestopcion": {
+          "populated": 51,
+          "distinct_populated": 1,
+          "nulls": 0
+        }
+      }
+    },
+    "joins": {
+      "personapage.ccodpersona -> persona.ccodpersona": {
+        "rows": 21909,
+        "nonempty": 21909,
+        "matched": 21908,
+        "unmatched": 1
+      },
+      "webubigeo.ccodzona -> webzonas.ccodzona": {
+        "rows": 2214,
+        "nonempty": 2214,
+        "matched": 1860,
+        "unmatched": 354
+      },
+      "webzonasdet.ccodzona -> webzonas.ccodzona": {
+        "rows": 2,
+        "nonempty": 2,
+        "matched": 2,
+        "unmatched": 0
+      },
+      "webzonasdet.ccodubigeo -> webubigeo.ccodubigeo": {
+        "rows": 2,
+        "nonempty": 2,
+        "matched": 2,
+        "unmatched": 0
+      },
+      "webcostos.ccodzona -> webzonas.ccodzona": {
+        "rows": 11,
+        "nonempty": 11,
+        "matched": 11,
+        "unmatched": 0
+      },
+      "documento.ccodpago -> pagepagos.ccodpagos": {
+        "rows": 81085,
+        "nonempty": 81085,
+        "matched": 59861,
+        "unmatched": 21224
+      },
+      "seccioncontenido.ccodseccion -> seccion.ccodseccion": {
+        "rows": 2286,
+        "nonempty": 2286,
+        "matched": 2286,
+        "unmatched": 0
+      },
+      "contenido.ccodmodulo -> webmodulos.ccodmodulo": {
+        "rows": 5148,
+        "nonempty": 5148,
+        "matched": 5148,
+        "unmatched": 0
+      },
+      "contenidodetalle.ccodcontenido -> contenido.ccodcontenido": {
+        "rows": 5140,
+        "nonempty": 5140,
+        "matched": 5140,
+        "unmatched": 0
+      },
+      "contenidogaleria.ccodcontenido -> contenido.ccodcontenido": {
+        "rows": 115,
+        "nonempty": 115,
+        "matched": 115,
+        "unmatched": 0
+      }
+    },
+    "activity": {
+      "documento": {
+        "2016": 4370,
+        "2017": 18355,
+        "2018": 10397,
+        "2019": 8514,
+        "2020": 3358,
+        "2021": 6419,
+        "2022": 6729,
+        "2023": 6921,
+        "2024": 6590,
+        "2025": 4918,
+        "2026": 4514
+      },
+      "stockmovi": {
+        "2017": 27305,
+        "2018": 62077,
+        "2019": 46490,
+        "2020": 18554,
+        "2021": 40079,
+        "2022": 37708,
+        "2023": 37735,
+        "2024": 39143,
+        "2025": 28490,
+        "2026": 22272
+      },
+      "stocknotas": {
+        "2017": 6249,
+        "2018": 15784,
+        "2019": 12911,
+        "2020": 4988,
+        "2021": 10261,
+        "2022": 9308,
+        "2023": 9880,
+        "2024": 9848,
+        "2025": 7635,
+        "2026": 6640
+      },
+      "sventas": {
+        "2019": 2280,
+        "2020": 461,
+        "2021": 767,
+        "2022": 1127,
+        "2023": 877,
+        "2024": 942,
+        "2025": 500,
+        "2026": 140
+      },
+      "personasaldos": {
+        "2018": 616,
+        "2019": 1444,
+        "2020": 504,
+        "2021": 626,
+        "2022": 758,
+        "2023": 535,
+        "2024": 507,
+        "2025": 366,
+        "2026": 258
+      },
+      "senvios": {
+        "2019": 448
+      },
+      "contenidoprenda": {
+        "2016": 877,
+        "2017": 7860,
+        "2018": 8929,
+        "2019": 6638,
+        "2020": 3751,
+        "2021": 7298,
+        "2022": 8844,
+        "2023": 11775,
+        "2024": 13000,
+        "2025": 13546,
+        "2026": 12286
+      },
+      "contenidogaleria": {
+        "2016": 115
+      },
+      "seccion": {
+        "2016": 18,
+        "2017": 30,
+        "2018": 6,
+        "2021": 1
+      },
+      "secciondetalle": {
+        "0000": 51,
+        "2017": 3,
+        "2021": 1
+      }
+    },
+    "checks": {
+      "missing_product_lines": {
+        "total": 41396,
+        "distinct_codes": 439,
+        "recovered_by_trim_casefold": 0,
+        "by_order_year": {
+          "2016": 3867,
+          "2017": 10635,
+          "2018": 9308,
+          "2019": 4619,
+          "2020": 1584,
+          "2021": 4307,
+          "2022": 3541,
+          "2023": 2464,
+          "2024": 1066,
+          "2025": 3,
+          "2026": 2
+        }
+      },
+      "documentodetalle_quantity": {
+        "invalid": 0,
+        "negative": 1487,
+        "zero": 152
+      },
+      "stockmovi_quantity": {
+        "invalid": 0,
+        "negative": 0,
+        "zero": 323
+      },
+      "personaventas": {
+        "campaigns": [
+          {
+            "code": "18102",
+            "start": "2018-02-01",
+            "end": "2018-03-24"
+          }
+        ],
+        "duplicate_person_campaign": 0
+      },
+      "classification": {
+        "distinct_products_linked": 2262,
+        "existing_products_linked": 2256,
+        "catalog_products": 5148,
+        "products_multiple_sections": 24,
+        "section_labels": [
+          "ABRIGO",
+          "BABY DOLL",
+          "BIKINI",
+          "BRASIER",
+          "Batola",
+          "Blusas",
+          "Botines",
+          "CAMISETA",
+          "CARDIGAN",
+          "CARTERA",
+          "CASACA",
+          "CATALOGO ESCUELA DE MODA",
+          "CHALECO",
+          "CORRECTOR DE POSTURA",
+          "Calzado",
+          "Camisas",
+          "Capa",
+          "Capri",
+          "Catalogo",
+          "Chaquetas",
+          "Chompera",
+          "Conjunto Deportivo",
+          "Conjunto dos piezas",
+          "ESCUELA DE MODA",
+          "Enlace Sistema de trabajo",
+          "Enlaces",
+          "Enterizos",
+          "Falda",
+          "KIMONO",
+          "LEGIN",
+          "LENTES",
+          "Olímpico",
+          "PANTY",
+          "PIJAMA",
+          "POLERA",
+          "POLIVESTIDO",
+          "PREMIOS",
+          "Pantalones",
+          "Polos",
+          "SNIKERS",
+          "STRING",
+          "Sandalias",
+          "Short",
+          "TOALLA",
+          "Top",
+          "Vestidos"
+        ]
+      },
+      "invoice_amounts": {
+        "rows": 7094,
+        "base_plus_tax_equals_total": 7094,
+        "distinct_orders": 7086
+      },
+      "order_detail_amounts": {
+        "orders_with_lines": 80578,
+        "exact_sum_equals_order_amount": 77302,
+        "orders_without_lines": 507
+      },
+      "contenidodetalle_visible_text_rows": 0,
+      "movement_dictionary": {
+        "type_unmatched": 0,
+        "concept_unmatched_exact": 226,
+        "concept_unmatched_trimmed": 167
+      },
+      "payment_dictionary": {
+        "orders_zero_payment_code": 21224
+      },
+      "ubigeo_zero_zone": 354,
+      "invoice_repeated_orders": 8
+    },
+    "parameter_groups": [
+      {
+        "group": "0001",
+        "label": "Tipo de Documento"
+      },
+      {
+        "group": "0002",
+        "label": "Monedas"
+      },
+      {
+        "group": "0003",
+        "label": "Sexo"
+      },
+      {
+        "group": "0005",
+        "label": "Ubicacion Menu"
+      },
+      {
+        "group": "0004",
+        "label": "Ubicacion Contenidos"
+      },
+      {
+        "group": "0006",
+        "label": "Destino Url"
+      },
+      {
+        "group": "0007",
+        "label": "Ordenar contenidos por"
+      },
+      {
+        "group": "0013",
+        "label": "Categorias de Contenidos"
+      },
+      {
+        "group": "0010",
+        "label": "Idiomas"
+      },
+      {
+        "group": "0011",
+        "label": "Usuarios"
+      },
+      {
+        "group": "0093",
+        "label": "Velocidad de Animacion"
+      },
+      {
+        "group": "0092",
+        "label": "Efectos de Transicion"
+      },
+      {
+        "group": "0031",
+        "label": "Categoria Hotel"
+      },
+      {
+        "group": "0032",
+        "label": "Tipo de Habitacion"
+      },
+      {
+        "group": "0033",
+        "label": "Vista Habitacion"
+      },
+      {
+        "group": "0034",
+        "label": "Regimen alimentario"
+      },
+      {
+        "group": "0035",
+        "label": "Dias / Noches"
+      },
+      {
+        "group": "0051",
+        "label": "Tipo de Publicacion"
+      },
+      {
+        "group": "0052",
+        "label": "Condiciones"
+      },
+      {
+        "group": "0061",
+        "label": "Tipo de Inmuebles"
+      },
+      {
+        "group": "0062",
+        "label": "Estado Operacion"
+      },
+      {
+        "group": "0091",
+        "label": "Meses"
+      },
+      {
+        "group": "0094",
+        "label": "Tipo de Documento"
+      },
+      {
+        "group": "0027",
+        "label": "Estados del Pedido"
+      },
+      {
+        "group": "0028",
+        "label": "TALLAS"
+      },
+      {
+        "group": "0030",
+        "label": "Tipo de Tarifas"
+      },
+      {
+        "group": "0063",
+        "label": "Antiguedad de Inmuebles"
+      },
+      {
+        "group": "0012",
+        "label": "Vendedoras"
+      },
+      {
+        "group": "0014",
+        "label": "Almacen Movimientos"
+      },
+      {
+        "group": "0015",
+        "label": "Almacen Conceptos Entradas"
+      },
+      {
+        "group": "0016",
+        "label": "Almacen Conceptos Salidas"
+      },
+      {
+        "group": "0018",
+        "label": "Lugares de Entrega"
+      },
+      {
+        "group": "0021",
+        "label": "Efectos de Transicion"
+      },
+      {
+        "group": "0008",
+        "label": "Documentos ventas Sunat"
+      },
+      {
+        "group": "0017",
+        "label": "Tipo de Clientes"
+      },
+      {
+        "group": "0029",
+        "label": "TABLA DE COLORES"
+      },
+      {
+        "group": "0022",
+        "label": "Velocidad de Animacion"
+      }
+    ],
+    "parameter_coverage": {
+      "stockcontrol.ccodcolor": [
+        {
+          "group": "0029",
+          "label": "TABLA DE COLORES",
+          "source_distinct": 280,
+          "covered_distinct": 277
+        }
+      ],
+      "stockcontrol.ccodtalla": [
+        {
+          "group": "0028",
+          "label": "TALLAS",
+          "source_distinct": 59,
+          "covered_distinct": 58
+        }
+      ],
+      "persona.cnivpersona": [],
+      "documento.cestpedido": [
+        {
+          "group": "0027",
+          "label": "Estados del Pedido",
+          "source_distinct": 7,
+          "covered_distinct": 7
+        }
+      ],
+      "stocknotas.ctipnota": []
+    }
+  },
+  "final_selection": {
+    "status": "applied_to_extractor",
+    "tables": [
+      "persona",
+      "contenido",
+      "campana",
+      "documento",
+      "documentodetalle",
+      "stockcontrol",
+      "stockmovi",
+      "stocknotas",
+      "contenidoprenda",
+      "campanarangos",
+      "sventas",
+      "personasaldos",
+      "webparametros",
+      "webmodulos",
+      "pagepagos",
+      "seccion",
+      "seccioncontenido",
+      "documentofile"
+    ],
+    "excluded_after_initial_proposal": [
+      "webubigeo",
+      "webzonas",
+      "webzonasdet",
+      "webcostos"
+    ],
+    "historical_tables_not_extracted": [
+      "senvios",
+      "personaventas"
+    ],
+    "geography_reference": "Legacy tabla_cruzada.xlsx; corrections pending verification"
+  }
+}

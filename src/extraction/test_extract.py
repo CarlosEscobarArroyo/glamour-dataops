@@ -23,7 +23,7 @@ class ExtractionTests(unittest.TestCase):
         config_patch.start()
         self.addCleanup(config_patch.stop)
         self.log_patch = patch.object(extraction, "log_event")
-        self.log_patch.start()
+        self.log_event = self.log_patch.start()
         self.addCleanup(self.log_patch.stop)
 
     def connection(self, columns, batches):
@@ -101,14 +101,26 @@ class ExtractionTests(unittest.TestCase):
 
     def test_failure_does_not_publish_a_complete_manifest(self):
         bucket = MagicMock()
-        with patch.object(extraction, "extraer_tabla", side_effect=RuntimeError("upload")):
+        with patch.object(extraction, "extraer_tabla", side_effect=[{"rows": 1}, RuntimeError("upload")]):
             with self.assertRaises(RuntimeError):
                 extraction.extraer_datos_mysql(MagicMock(), bucket, "run", 100)
         bucket.blob.assert_not_called()
 
-    def test_success_manifest_covers_exactly_the_five_legacy_tables(self):
+    def test_missing_selected_table_fails_without_publishing_manifest(self):
+        connection, _ = self.connection([], [])
         bucket = MagicMock()
-        expected = ["persona", "contenido", "campana", "documento", "documentodetalle"]
+        with self.assertRaisesRegex(ValueError, "No se encontró el esquema"):
+            extraction.extraer_datos_mysql(connection, bucket, "run", 100)
+        bucket.blob.assert_not_called()
+
+    def test_success_manifest_covers_only_the_18_selected_tables(self):
+        bucket = MagicMock()
+        expected = [
+            "persona", "contenido", "campana", "documento", "documentodetalle",
+            "stockcontrol", "stockmovi", "stocknotas", "contenidoprenda",
+            "campanarangos", "sventas", "personasaldos", "webparametros",
+            "webmodulos", "pagepagos", "seccion", "seccioncontenido", "documentofile",
+        ]
         with patch.object(extraction, "extraer_tabla", return_value={"rows": 0, "objects": []}) as extract:
             extraction.extraer_datos_mysql(MagicMock(), bucket, "run", 100)
         self.assertEqual([call.args[2] for call in extract.call_args_list], expected)
@@ -117,6 +129,8 @@ class ExtractionTests(unittest.TestCase):
         manifest = json.loads(upload.args[0])
         self.assertEqual(manifest["status"], "complete")
         self.assertEqual(list(manifest["tables"]), expected)
+        self.assertEqual(manifest["selected_tables"], expected)
+        self.assertEqual(manifest["scope"], "selected_tables")
         self.assertEqual(upload.kwargs["if_generation_match"], 0)
 
     def test_upload_failure_stops_before_reading_another_batch(self):
@@ -201,13 +215,18 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(config["GCS_BUCKET"], "landing-cloud")
         self.assertEqual(config["secrets"], {key: key for key in extraction.MYSQL_SECRET_KEYS})
 
-    def test_invalid_local_json_fails_before_authenticating(self):
-        for content in ("{invalid-json", "[]", '{"secrets": "invalid"}'):
+    def test_invalid_local_config_reports_configuration_error_before_authenticating(self):
+        for content in ("{invalid-json", "[]", "null", "true", "42", '"invalid"',
+                        '{"secrets": "invalid"}'):
             with self.subTest(content=content):
                 self.config_path.write_text(content, encoding="utf-8")
-                with patch.object(extraction.google.auth, "default") as auth:
+                with (
+                    patch.dict(os.environ, {}, clear=True),
+                    patch.object(extraction.google.auth, "default") as auth,
+                ):
                     self.assertEqual(extraction.main(), 1)
                     auth.assert_not_called()
+                self.assertEqual(self.log_event.call_args.args[0], "configuration_failed")
 
 
 if __name__ == "__main__":
