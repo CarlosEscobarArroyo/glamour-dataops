@@ -10,3 +10,15 @@ __pycache__/
 !*.env.example
 *.parquet
 .DS_Store
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+
+# Nunca llaves de cuentas de servicio
+*-key.json
+credenciales*.json
