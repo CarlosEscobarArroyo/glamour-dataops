@@ -97,8 +97,8 @@ despliega desde aquí).
 
 - **Imágenes (CI/CD):** Terraform crea los Jobs con una imagen de ejemplo y luego
   ignora la imagen. El pipeline de contenedores publica en
-  `us-central1-docker.pkg.dev/<proyecto>/glamour/` y actualiza el Job con
-  `gcloud run jobs update <job> --image <imagen>`.
+  `<region>-docker.pkg.dev/<proyecto>/<proyecto>-ar-jobs/` (imágenes `extraction` y `quality`, ver `docs/artifact_registry.md`) y actualiza el Job con
+  `gcloud run jobs update <job> --image <imagen>@sha256:<digest>`.
 - **Orquestación:** el flujo se lee de `orchestration/workflow_comercial.yaml`.
   Mientras no exista, se despliega `modules/orchestration/provisional.yaml`.
   El flujo recibe por `sys.get_env` los nombres de los Jobs, del bucket y de los datasets.

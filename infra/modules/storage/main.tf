@@ -1,7 +1,7 @@
 # Landing zone (Parquet del extractor) y bucket de Data Docs de Great Expectations.
 
 resource "google_storage_bucket" "landing" {
-  name                        = "${var.project_id}-landing"
+  name                        = "${var.project_id}-cs-landing"
   location                    = var.region
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
@@ -18,7 +18,7 @@ resource "google_storage_bucket" "landing" {
 }
 
 resource "google_storage_bucket" "data_docs" {
-  name                        = "${var.project_id}-data-docs"
+  name                        = "${var.project_id}-cs-data-docs"
   location                    = var.region
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"

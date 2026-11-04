@@ -49,18 +49,16 @@ module "bigquery" {
   dimensional_lectores = { looker = module.iam.members.looker }
 }
 
+# Convención de docs/artifact_registry.md: un repositorio por proyecto, una imagen por
+# componente (extraction, quality) y etiquetas inmutables. Sin borrado automático.
 resource "google_artifact_registry_repository" "imagenes" {
-  repository_id = local.prefijo
+  repository_id = "${var.project_id}-ar-jobs"
   location      = var.region
   format        = "DOCKER"
   description   = "Imágenes de los Cloud Run Jobs (extracción y calidad)."
 
-  cleanup_policies {
-    id     = "conservar-ultimas-10"
-    action = "KEEP"
-    most_recent_versions {
-      keep_count = 10
-    }
+  docker_config {
+    immutable_tags = true
   }
 }
 
@@ -79,7 +77,6 @@ module "job_extraccion" {
   env = {
     GOOGLE_CLOUD_PROJECT  = var.project_id
     GCS_BUCKET            = module.storage.landing_bucket
-    GCS_PREFIX            = "raw/mysql"
     EXTRACTION_BATCH_SIZE = "50000"
   }
 }
