@@ -1,0 +1,108 @@
+name: Terraform
+
+# Rama dev -> proyecto glamour-dataops-dev; rama main -> glamour-dataops-prod.
+# Pull request: valida y muestra el plan. Push (merge): aplica; prod espera aprobación.
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - "infra/**"
+      - "orchestration/**"
+      - ".github/workflows/terraform.yml"
+  push:
+    branches: [dev, main]
+    paths:
+      - "infra/**"
+      - "orchestration/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # para Workload Identity Federation (sin llaves JSON)
+
+env:
+  TF_VERSION: "1.17.1"
+  TF_IN_AUTOMATION: "true"
+  ENTORNO: ${{ (github.base_ref || github.ref_name) == 'main' && 'prod' || 'dev' }}
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Formato
+        run: terraform fmt -recursive -check infra
+
+      - name: Validar dev y prod
+        run: |
+          for d in infra/environments/dev infra/environments/prod; do
+            terraform -chdir=$d init -backend=false -input=false
+            terraform -chdir=$d validate
+          done
+
+  plan:
+    if: github.event_name == 'pull_request'
+    needs: validar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency: terraform-${{ (github.base_ref || github.ref_name) == 'main' && 'prod' || 'dev' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars[format('WIF_PROVIDER_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
+          service_account: ${{ vars[format('TF_SA_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Plan
+        working-directory: infra/environments/${{ env.ENTORNO }}
+        run: |
+          terraform init -input=false
+          terraform plan -input=false -no-color -out=tfplan
+          {
+            echo "## Plan de Terraform (${ENTORNO})"
+            echo '```'
+            terraform show -no-color tfplan | head -c 60000
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    if: github.event_name != 'pull_request'
+    needs: validar
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # El environment "prod" tiene revisores obligatorios: el apply espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    concurrency: terraform-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars[format('WIF_PROVIDER_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
+          service_account: ${{ vars[format('TF_SA_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Apply
+        working-directory: infra/environments/${{ env.ENTORNO }}
+        run: |
+          terraform init -input=false
+          terraform apply -input=false -auto-approve

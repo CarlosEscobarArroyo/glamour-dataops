@@ -1,0 +1,5 @@
+# Flujo provisional: se reemplaza por orchestration/workflow_comercial.yaml.
+main:
+  steps:
+    - pendiente:
+        return: "Falta orchestration/workflow_comercial.yaml"
