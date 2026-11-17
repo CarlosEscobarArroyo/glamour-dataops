@@ -50,8 +50,6 @@ def cargar_config() -> dict:
         config = {}
     except (OSError, ValueError) as error:
         raise ConfigurationError("No se pudo leer config_dev.json como JSON válido") from error
-    if not isinstance(config, dict):
-        raise ConfigurationError("config_dev.json debe contener un objeto JSON")
 
     for name in ("GOOGLE_CLOUD_PROJECT", "GCS_BUCKET", "EXTRACTION_BATCH_SIZE"):
         if name in os.environ:
