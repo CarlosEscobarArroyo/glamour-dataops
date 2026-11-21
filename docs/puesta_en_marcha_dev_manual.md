@@ -6,7 +6,7 @@ nombres son los mismos que usa Terraform, así que después se importan en vez d
 recrearse (ver [Migración a Terraform](#migración-a-terraform)).
 
 Requisitos: `gcloud` y `gh` con sesión iniciada, permisos de propietario sobre el
-proyecto y el secreto `MYSQL_PASSWORD` ya creado con su valor.
+proyecto y los secretos `MYSQL_HOST` y `MYSQL_PASSWORD` ya creados con su valor.
 
 Ejecutar los pasos en orden y en la misma terminal: el paso 1 define variables de
 shell (`$P`, `$R`, `$REPO`) que usan los demás.
@@ -167,14 +167,16 @@ La red no hace nada hasta que el Job la usa. Eso está en dos anotaciones de
 `sa-extraction-dev` es la identidad con la que corre el contenedor. Recibe solo dos
 permisos, cada uno sobre un recurso y no sobre el proyecto:
 
-- `secretmanager.secretAccessor` sobre `MYSQL_PASSWORD`: Cloud Run lee el secreto
-  con esta cuenta al iniciar la ejecución y lo entrega como variable de entorno.
+- `secretmanager.secretAccessor` sobre `MYSQL_HOST` y `MYSQL_PASSWORD`: Cloud Run
+  lee los secretos con esta cuenta al iniciar la ejecución y los entrega como
+  variables de entorno.
 - `storage.objectCreator` sobre el bucket: puede crear objetos, pero no leerlos,
   borrarlos ni sobrescribirlos. Coincide con el extractor, que sube cada archivo con
   `if_generation_match=0`.
 
 ```bash
 gcloud iam service-accounts create sa-extraction-dev
+gcloud secrets add-iam-policy-binding MYSQL_HOST --member serviceAccount:sa-extraction-dev@$P.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor
 gcloud secrets add-iam-policy-binding MYSQL_PASSWORD --member serviceAccount:sa-extraction-dev@$P.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor
 gcloud storage buckets add-iam-policy-binding gs://$P-cs-landing --member serviceAccount:sa-extraction-dev@$P.iam.gserviceaccount.com --role roles/storage.objectCreator
 ```
