@@ -13,7 +13,7 @@ infra/
 ├── modules/
 │   ├── iam/              Cuentas de servicio y roles de proyecto (pipeline y equipo).
 │   ├── vpc/              VPC, subred, Cloud Router, IP fija y Cloud NAT.
-│   ├── secrets/          El secreto MYSQL_PASSWORD (vacío) y quién lo lee.
+│   ├── secrets/          Los secretos MYSQL_HOST y MYSQL_PASSWORD (vacíos) y quién los lee.
 │   ├── storage/          Landing zone (Parquet) y bucket de Data Docs.
 │   ├── bigquery/         Datasets staging y dimensional, con sus accesos.
 │   └── orchestration/    Cloud Workflows y Cloud Scheduler (5:00 a. m., Lima).
@@ -30,8 +30,13 @@ y `backend.tf`.
 | Cuenta | Puede | Sobre |
 | --- | --- | --- |
 | `sa-extraction-<ambiente>` | Crear objetos (no borrar ni sobrescribir) | Bucket landing |
+<<<<<<< HEAD
 | | Leer el valor | Secreto `MYSQL_PASSWORD` |
 | `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `bq_staging` |
+=======
+| | Leer el valor | Secretos `MYSQL_HOST` y `MYSQL_PASSWORD` |
+| `sa-calidad-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `staging` |
+>>>>>>> 1ae7f82 (feat(infra): crea el secreto MYSQL_HOST y da lectura al extractor)
 | | Escribir Data Docs | Bucket de Data Docs |
 | `sa-workflows-<ambiente>` | Ejecutar los Jobs | Proyecto (los Jobs los crea el CI) |
 | | Leer Parquet | Bucket landing |
@@ -78,8 +83,9 @@ Los integrantes reciben los roles de la sección 7 del README principal
    | `WIF_PROVIDER` | output `wif_provider` del paso 1 |
    | `DEPLOY_SA` | `sa-deploy-dev@glamour-dataops-dev.iam.gserviceaccount.com` |
 
-4. Si el secreto `MYSQL_PASSWORD` ya existe en el proyecto, importarlo antes del
-   primer `apply` para que Terraform no intente crearlo de nuevo:
+4. Si un secreto (`MYSQL_HOST` o `MYSQL_PASSWORD`) ya existe en el proyecto,
+   importarlo antes del primer `apply` para que Terraform no intente crearlo de
+   nuevo. Ejemplo con `MYSQL_PASSWORD`:
 
    ```bash
    cd infra/environments/dev
@@ -90,7 +96,8 @@ Los integrantes reciben los roles de la sección 7 del README principal
 5. Hacer merge a `dev`. GitHub Actions aplica la infraestructura y después
    `jobs.yml` puede desplegar los Jobs.
 
-6. Si el secreto es nuevo, cargar su valor (nunca en el repo ni en Terraform):
+6. Si un secreto es nuevo, cargar su valor (nunca en el repo ni en Terraform).
+   Repetir para `MYSQL_HOST` y `MYSQL_PASSWORD`:
 
    ```bash
    printf '%s' 'valor' | gcloud secrets versions add MYSQL_PASSWORD --data-file=- --project=glamour-dataops-dev

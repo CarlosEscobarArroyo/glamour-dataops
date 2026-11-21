@@ -20,7 +20,7 @@ module "vpc" {
 
 module "secrets" {
   source  = "../../modules/secrets"
-  nombres = ["MYSQL_PASSWORD"] # el único secreto; el resto de la conexión va en job.yaml
+  nombres = ["MYSQL_HOST", "MYSQL_PASSWORD"] # el resto de la conexión va en job.yaml
   lectores = {
     extraction = module.iam.members.extraction
   }
