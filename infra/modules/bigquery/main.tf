@@ -1,7 +1,7 @@
 # Dos capas: staging (crudo, aislado del usuario final) y dimensional (lo que ve Looker Studio).
 
 resource "google_bigquery_dataset" "staging" {
-  dataset_id                 = "staging"
+  dataset_id                 = "bq_staging"
   location                   = var.location
   description                = "Tablas crudas cargadas desde la landing zone. No se expone a usuarios finales."
   delete_contents_on_destroy = false
@@ -12,7 +12,7 @@ resource "google_bigquery_dataset" "staging" {
 }
 
 resource "google_bigquery_dataset" "dimensional" {
-  dataset_id                 = "dimensional"
+  dataset_id                 = "bq_dimensional"
   location                   = var.location
   description                = "Modelo dimensional validado: fact_pedidos y sus dimensiones."
   delete_contents_on_destroy = false

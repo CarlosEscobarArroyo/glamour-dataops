@@ -8,7 +8,7 @@ locals {
 
   cuentas = {
     extraction = "Cloud Run Job de extracción (MariaDB a la landing)"
-    calidad    = "Cloud Run Job de calidad (Great Expectations)"
+    quality    = "Cloud Run Job de calidad (Great Expectations)"
     workflows  = "Orquestador Cloud Workflows"
     scheduler  = "Disparador diario de Cloud Scheduler"
     looker     = "Lectura del modelo dimensional para Looker Studio"
@@ -16,7 +16,7 @@ locals {
   }
 
   roles_proyecto = {
-    "calidad-jobuser"   = { cuenta = "calidad", rol = "roles/bigquery.jobUser" }
+    "calidad-jobuser"   = { cuenta = "quality", rol = "roles/bigquery.jobUser" }
     "workflows-jobuser" = { cuenta = "workflows", rol = "roles/bigquery.jobUser" }
     "workflows-logs"    = { cuenta = "workflows", rol = "roles/logging.logWriter" }
     "scheduler-invoker" = { cuenta = "scheduler", rol = "roles/workflows.invoker" }
@@ -60,7 +60,7 @@ resource "google_project_iam_member" "equipo" {
 
 # sa-deploy asigna a cada Job su cuenta de ejecución.
 resource "google_service_account_iam_member" "deploy_usa" {
-  for_each           = toset(["extraction", "calidad"])
+  for_each           = toset(["extraction", "quality"])
   service_account_id = google_service_account.sa[each.key].name
   role               = "roles/iam.serviceAccountUser"
   member             = google_service_account.sa["deploy"].member

@@ -13,7 +13,7 @@ resource "google_workflows_workflow" "pipeline" {
 }
 
 resource "google_cloud_scheduler_job" "diario" {
-  name      = "${var.nombre}-diario"
+  name      = "${replace(var.nombre, "-wf-", "-sch-")}-daily" # <proyecto>-sch-pipeline-daily
   region    = var.region
   schedule  = var.horario
   time_zone = var.zona_horaria

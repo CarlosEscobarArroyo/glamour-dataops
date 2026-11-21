@@ -31,13 +31,13 @@ y `backend.tf`.
 | --- | --- | --- |
 | `sa-extraction-<ambiente>` | Crear objetos (no borrar ni sobrescribir) | Bucket landing |
 | | Leer el valor | Secreto `MYSQL_PASSWORD` |
-| `sa-calidad-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `staging` |
+| `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `bq_staging` |
 | | Escribir Data Docs | Bucket de Data Docs |
 | `sa-workflows-<ambiente>` | Ejecutar los Jobs | Proyecto (los Jobs los crea el CI) |
 | | Leer Parquet | Bucket landing |
-| | Editar tablas y ejecutar consultas | Datasets `staging` y `dimensional` |
+| | Editar tablas y ejecutar consultas | Datasets `bq_staging` y `bq_dimensional` |
 | `sa-scheduler-<ambiente>` | Iniciar ejecuciones del workflow | Proyecto |
-| `sa-looker-<ambiente>` | Leer tablas | Solo `dimensional` |
+| `sa-looker-<ambiente>` | Leer tablas | Solo `bq_dimensional` |
 | `sa-deploy-<ambiente>` | Publicar imágenes y desplegar Jobs | Repositorio de imágenes y proyecto; solo desde el environment de GitHub de su ambiente |
 | `sa-terraform-<ambiente>` | Administrar la plataforma (sin `owner`) | Proyecto; solo la usa GitHub Actions |
 

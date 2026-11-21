@@ -35,7 +35,7 @@ module "storage" {
   landing_escritores   = { extraction = module.iam.members.extraction }
   landing_lectores     = { workflows = module.iam.members.workflows } # carga de la landing a staging
   landing_listadores   = module.iam.equipo_members
-  data_docs_escritores = { calidad = module.iam.members.calidad }
+  data_docs_escritores = { calidad = module.iam.members.quality }
 }
 
 module "bigquery" {
@@ -43,7 +43,7 @@ module "bigquery" {
   location = var.bq_location
 
   staging_editores     = { workflows = module.iam.members.workflows }
-  staging_lectores     = { calidad = module.iam.members.calidad }
+  staging_lectores     = { calidad = module.iam.members.quality }
   dimensional_editores = { workflows = module.iam.members.workflows }
   dimensional_lectores = { looker = module.iam.members.looker }
 }
@@ -72,7 +72,7 @@ resource "google_artifact_registry_repository_iam_member" "deploy" {
 
 module "orchestration" {
   source              = "../../modules/orchestration"
-  nombre              = "${local.prefijo}-pipeline"
+  nombre              = "${local.prefijo}-wf-pipeline"
   region              = var.region
   workflows_sa        = module.iam.emails.workflows
   scheduler_sa        = module.iam.emails.scheduler
