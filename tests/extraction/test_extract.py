@@ -87,7 +87,7 @@ class ExtractionTests(unittest.TestCase):
 
     def test_empty_table_still_has_a_typed_parquet_file(self):
         connection, _ = self.connection(
-            [("id", "int", "int", 10, 0, "NO")], [[]]
+            [("id", "int", "int", 10, 0, "NO")], [[], []]
         )
         bucket, uploaded = self.capturing_bucket()
         result = extraction.extraer_tabla(connection, bucket, "persona", "run", 10)
@@ -232,6 +232,24 @@ class ExtractionTests(unittest.TestCase):
             extraction.conectar_mysql()
         connect.assert_not_called()
         self.assertEqual(self.log_event.call_args.args[0], "mysql_connection_failed")
+
+    def run_prefix_usado(self, entorno):
+        with (
+            patch.dict(os.environ, entorno, clear=True),
+            patch.object(extraction.storage, "Client"),
+            patch.object(extraction, "conectar_mysql"),
+            patch.object(extraction, "extraer_datos_mysql") as extraer,
+        ):
+            extraction.ejecutar_extraccion()
+        return extraer.call_args.args[2]
+
+    def test_run_prefix_from_the_workflow_is_used_as_is(self):
+        prefix = self.run_prefix_usado({**ENTORNO, "RUN_PREFIX": "date=2026-11-21/abc"})
+        self.assertEqual(prefix, "date=2026-11-21/abc")
+
+    def test_run_prefix_is_generated_when_the_workflow_does_not_send_one(self):
+        prefix = self.run_prefix_usado(ENTORNO)
+        self.assertRegex(prefix, r"^date=\d{4}-\d{2}-\d{2}/\d{8}T\d{6}-[0-9a-f]{32}$")
 
 
 if __name__ == "__main__":

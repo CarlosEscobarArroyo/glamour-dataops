@@ -34,14 +34,15 @@ seis son obligatorias y las define el Job en `job.yaml` (ver la
 | Variable | Uso | Origen |
 | --- | --- | --- |
 | `GCS_BUCKET` | Bucket de la Landing Zone, sin `gs://` | Valor en `job.yaml` |
-| `MYSQL_HOST` | Host de MariaDB | Valor en `job.yaml` |
+| `MYSQL_HOST` | Host de MariaDB | Secret Manager, inyectada por Cloud Run |
 | `MYSQL_PORT` | Puerto de MariaDB | Valor en `job.yaml` |
 | `MYSQL_DATABASE` | Base de datos de origen | Valor en `job.yaml` |
 | `MYSQL_USER` | Usuario de lectura | Valor en `job.yaml` |
 | `MYSQL_PASSWORD` | Contraseña | Secret Manager, inyectada por Cloud Run |
+| `RUN_PREFIX` | Carpeta de destino dentro del bucket (opcional) | El workflow, al ejecutar el Job |
 
 Dev y prod leen la misma MariaDB, por lo que los datos de conexión son iguales
-en ambos ambientes; solo la contraseña es un secreto. Si falta alguna variable o
+en ambos ambientes; el host y la contraseña son secretos. Si falta alguna variable o
 está vacía, el proceso termina antes de conectarse y el log las nombra.
 
 El tamaño de lote (`BATCH_SIZE`, 50000 filas), los tiempos de espera de conexión
@@ -77,8 +78,8 @@ Ejecutar el build desde la raíz del repositorio. `src/extraction/` contiene tod
 necesario para construir la imagen.
 
 El Job está definido en [`job.yaml`](job.yaml) y lo despliega el CI. Se ejecuta
-con una sola tarea y con las variables de la sección anterior. La cuenta de servicio necesita acceso al secreto
-`MYSQL_PASSWORD` y permiso para crear objetos en el bucket. El usuario de MariaDB
+con una sola tarea y con las variables de la sección anterior. La cuenta de servicio necesita acceso a los secretos
+`MYSQL_HOST` y `MYSQL_PASSWORD` y permiso para crear objetos en el bucket. El usuario de MariaDB
 necesita acceso de lectura a las 18 tablas seleccionadas. La conectividad conserva
 el requisito del legacy: salida por VPC y Cloud NAT con IP fija autorizada por el
 proveedor.
@@ -93,7 +94,7 @@ programa ejecuciones.
 ## Archivos generados
 
 ```text
-gs://<bucket>/date=2026-10-24/<fecha-UTC>-<uuid>/
+gs://<bucket>/date=2026-10-24/<fecha-hora-Perú>-<uuid>/
   persona/part-00000.parquet
   contenido/part-00000.parquet
   campana/part-00000.parquet
@@ -104,7 +105,8 @@ gs://<bucket>/date=2026-10-24/<fecha-UTC>-<uuid>/
   manifest.json
 ```
 
-Cada ejecución e intento usa una ruta nueva. Los uploads usan
+Cada ejecución usa una ruta nueva: la que envía el workflow en `RUN_PREFIX` o,
+si el Job se ejecuta a mano, una generada con la fecha y hora de Perú. Los uploads usan
 [`if_generation_match=0`](https://docs.cloud.google.com/storage/docs/uploading-objects)
 para impedir sobrescribir objetos existentes. Esto protege las escrituras del
 extractor; la retención del bucket se configura por separado.
@@ -112,8 +114,9 @@ extractor; la retención del bucket se configura por separado.
 `manifest.json` contiene `scope: "selected_tables"`, la lista `selected_tables`,
 las filas leídas y los archivos de cada tabla en `tables`. Se publica al terminar
 las 18 tablas. Una ruta sin manifiesto es una extracción incompleta y no
-debe consumirse como un conjunto completo. Un reintento vuelve a leer el origen
-y genera otra ruta; no elimina ni reanuda los objetos de un intento anterior.
+debe consumirse como un conjunto completo. El Job no reintenta
+(`maxRetries: 0`): lo hace el workflow, que vuelve a leer el origen en otra ruta;
+no elimina ni reanuda los objetos de un intento anterior.
 
 Los tipos provienen de `information_schema`: se conservan decimales, enteros y
 columnas con valores nulos. Las tablas vacías producen un Parquet con su esquema.

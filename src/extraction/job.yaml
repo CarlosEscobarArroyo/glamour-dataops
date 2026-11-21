@@ -18,7 +18,10 @@ spec:
       template:
         spec:
           serviceAccountName: sa-extraction-${AMBIENTE}@${PROJECT_ID}.iam.gserviceaccount.com
-          maxRetries: 1
+          # Sin reintentos aquí: los hace el workflow, con una carpeta nueva por
+          # intento. Un reintento del Job reusaría RUN_PREFIX y fallaría, porque
+          # el extractor no sobrescribe archivos.
+          maxRetries: 0
           timeoutSeconds: 3600
           containers:
             - image: ${IMAGE}
@@ -29,9 +32,13 @@ spec:
               env:
                 - name: GCS_BUCKET
                   value: ${PROJECT_ID}-cs-landing
-                # Dev y prod leen la misma MariaDB: los datos de conexión van escritos aquí.
+                # Dev y prod leen la misma MariaDB: puerto, base y usuario van escritos aquí.
+                # El host y la contraseña son secretos de Secret Manager del proyecto.
                 - name: MYSQL_HOST
-                  value: 75.102.22.88
+                  valueFrom:
+                    secretKeyRef:
+                      name: MYSQL_HOST
+                      key: latest
                 - name: MYSQL_PORT
                   value: "3306"
                 - name: MYSQL_DATABASE
@@ -41,5 +48,5 @@ spec:
                 - name: MYSQL_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: MYSQL_PASSWORD  # secreto en Secret Manager del proyecto
-                      key: latest           # versión
+                      name: MYSQL_PASSWORD
+                      key: latest  # versión
