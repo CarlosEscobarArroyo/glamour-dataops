@@ -38,19 +38,20 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
 
 ## 3. Estructura del Monorepo
 
-Cada contenedor agrupa su código, dependencias y pruebas en una carpeta dentro de `src/`.
+Cada contenedor agrupa su código y dependencias en una carpeta dentro de `src/`.
+Sus pruebas viven en `tests/`, que replica la estructura de `src/`.
 
 Guía del primer contenedor: [extracción de MariaDB a GCS](./src/extraction/README.md).
 Convención de publicación: [imágenes de los Jobs en Artifact Registry](./docs/artifact_registry.md).
-El workflow [CI extracción](./.github/workflows/ci-extraction.yml) ejecuta las pruebas
-con Python 3.11 en cada push, pull request o ejecución manual, sin acceder a MariaDB ni GCP.
+El workflow [Jobs](./.github/workflows/jobs.yml) ejecuta las pruebas del componente
+que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `main` publica su imagen y
+despliega su Job.
 Los componentes siguientes describen la estructura objetivo; las carpetas de
-calidad, transformación, infraestructura y orquestación aún no están implementadas.
+calidad, transformación, orquestación y gobierno aún no están implementadas.
 
 * **`.github/workflows/`** — Pipelines CI/CD (GitHub Actions)
-  * `ci-extraction.yml`: Pruebas unitarias del extractor (implementado).
-  * `cd-terraform.yml`: Despliegue de infraestructura en GCP (`dev` / `prod`), pendiente.
-  * `cd-containers.yml`: Construcción y publicación de imágenes Docker en Artifact Registry, pendiente.
+  * `jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
+  * `terraform.yml`: Validación, plan y despliegue de la infraestructura en GCP (`dev` / `prod`).
 * **`infra/`** — Infraestructura como Código (Terraform)
   * `modules/`: Módulos reutilizables (`storage`, `bigquery`, `cloud_run`, `iam`, `vpc`).
   * `environments/dev/`: Configuración del entorno `glamour-dataops-dev`.
@@ -59,6 +60,8 @@ calidad, transformación, infraestructura y orquestación aún no están impleme
   * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
   * `quality/`: Contenedor 2 — Cloud Run Job de calidad con Great Expectations, pendiente.
   * `transformation/`: Consultas y modelado en BigQuery, pendiente.
+* **`tests/`** — Pruebas, con la misma estructura que `src/`
+  * `extraction/`: Pruebas unitarias del extractor.
 * **`orchestration/`** — Definición del orquestador
   * `workflow_comercial.yaml`: Flujo declarativo de Google Cloud Workflows.
 * **`governance/`** — Documentación base y configuración de OpenMetadata
@@ -100,8 +103,81 @@ calidad, transformación, infraestructura y orquestación aún no están impleme
 3. Definir el proyecto activo de desarrollo:
    `gcloud config set project glamour-dataops-dev`
 
-Para configurar `config_dev.json`, ejecutar el extractor o correr las pruebas,
-consultar la [guía de extracción](./src/extraction/README.md).
+Para correr las pruebas del extractor, consultar la
+[guía de extracción](./src/extraction/README.md). El extractor no se ejecuta en
+local: se valida con sus pruebas y ejecutando el Job en dev.
+
+---
+
+## 6. Gestión de la Configuración
+
+Diseño acordado para variables de entorno, secretos y valores por ambiente.
+Describe el estado objetivo; su implementación está pendiente.
+
+**Principio:** cada valor vive en un solo lugar, y ese lugar depende del tipo de
+valor. El código de los componentes solo lee variables de entorno.
+
+### Dónde vive cada tipo de valor
+
+| Tipo | Ejemplos | Dónde vive |
+| :--- | :--- | :--- |
+| Identidad del ambiente | Proyecto, región | Variables de GitHub por ambiente (para el CI) y `terraform.tfvars` (para la plataforma) |
+| Referencias a recursos | Bucket landing, cuenta de servicio, red | `job.yaml`, formadas a partir del proyecto (`${PROJECT_ID}-cs-landing`) |
+| Secretos | `MYSQL_PASSWORD` | Valor en Secret Manager; referencia en `job.yaml`; Cloud Run lo inyecta como variable de entorno |
+| Datos de conexión no secretos | Host, puerto, base y usuario de MariaDB | `job.yaml`, escritos directamente: son iguales en dev y prod |
+| Políticas del ambiente | Retención, scheduler pausado, protección contra borrado, equipo | `terraform.tfvars` |
+| Dimensionamiento del Job | CPU, memoria, timeout, reintentos | `job.yaml` |
+| Parámetros de operación | Tamaño de lote, timeouts de conexión | Constante en el código; pasa a variable en `job.yaml` solo si un ambiente necesita otro valor |
+| Reglas del pipeline | Lista de tablas, formato, rutas, expectativas, SQL | Código |
+| Identidad de despliegue | Proveedor y cuenta para autenticar GitHub contra GCP | Variables de GitHub por ambiente |
+
+### Quién es dueño de qué
+
+* **Terraform:** la plataforma. Proyecto, red, cuentas de servicio y permisos, buckets, datasets, secretos vacíos, Artifact Registry, workflow y scheduler.
+* **CI de los Jobs:** cada Cloud Run Job completo. Un único workflow detecta qué componente de `src/` cambió y, para ese componente, ejecuta las pruebas, construye y publica la imagen, rellena los marcadores de `job.yaml` y lo aplica con `gcloud run jobs replace`. Falla si queda un marcador sin resolver.
+* **Ramas:** `dev` despliega al proyecto dev; `main` despliega a prod con aprobación.
+
+### Archivos de un componente
+
+Cada componente tiene en `src/<componente>/` su código, su `Dockerfile` y un
+`job.yaml` que define el Job: imagen, variables de entorno, referencias a secretos,
+recursos, cuenta de servicio y red. El mismo archivo sirve para dev y prod; solo
+cambian los marcadores. Las pruebas viven en `tests/<componente>/`, en una carpeta
+`tests/` de la raíz que replica la estructura de `src/`.
+
+Para el extractor:
+
+| Lugar | Contenido |
+| :--- | :--- |
+| `src/extraction/extract.py` | Lee `GCS_BUCKET` y las cinco `MYSQL_*`. Nombra en el log las que falten y la causa de un fallo de conexión |
+| `src/extraction/job.yaml` | Imagen, las seis variables del contenedor (cinco con valor y un secreto), recursos, cuenta de servicio y red |
+| `tests/extraction/` | Pruebas unitarias |
+| `.github/workflows/jobs.yml` | Pruebas, imagen y despliegue |
+| Secret Manager de cada proyecto | Valor de `MYSQL_PASSWORD` |
+
+`config_dev.json` desaparece. La ejecución local queda fuera de alcance: el
+extractor se valida con las pruebas unitarias y ejecutando el Job en dev.
+
+### Variables de GitHub
+
+Cuatro por ambiente (`dev` y `prod`), compartidas por todos los componentes:
+`PROJECT_ID`, `REGION`, `WIF_PROVIDER` (proveedor de identidad) y `DEPLOY_SA`
+(cuenta de despliegue).
+Solo se agrega otra cuando un valor difiere entre ambientes y no puede formarse
+a partir del proyecto.
+
+### Qué tocar según el cambio
+
+| Cambio | Dónde |
+| :--- | :--- |
+| Lógica o valor por defecto | Código |
+| Memoria, timeout, una variable distinta por ambiente | `job.yaml` |
+| Contraseña u otro secreto | Secret Manager, sin desplegar |
+| Recurso o permiso nuevo, política del ambiente | Terraform |
+
+### Pendiente de decidir
+
+Imagen de prod: reconstruirla al hacer merge a `main` o copiar la validada en dev.
 
 ---
 

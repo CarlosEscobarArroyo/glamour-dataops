@@ -1,7 +1,7 @@
 # Imágenes de los Cloud Run Jobs
 
 Convención de nombres para las imágenes de los contenedores del proyecto.
-La región está pendiente de definir. Esta documentación no crea recursos ni
+La región es `us-east1`. Esta documentación no crea recursos ni
 publica imágenes. La consulta del 30/10/2026 devolvió `SERVICE_DISABLED` para
 Artifact Registry en `glamour-dataops-dev`; no se pudo inventariar sus repositorios.
 
@@ -51,10 +51,7 @@ no necesita una imagen propia. Los datos históricos se almacenan en GCS.
 
 ## Región y creación
 
-Usar la región acordada para los Cloud Run Jobs. La elección está pendiente y
-no se establece un valor por defecto en los scripts del proyecto.
-
-Una vez definida, habilitar la API y crear un repositorio Docker estándar con
+Usar `us-east1`, la región de los Cloud Run Jobs. Habilitar la API y crear un repositorio Docker estándar con
 nombre `glamour-dataops-dev-ar-jobs`, en esa región, con etiquetas inmutables.
 No configurar borrado automático de versiones hasta definir qué imágenes deben
 permanecer disponibles para los Jobs desplegados y su recuperación.
@@ -79,7 +76,7 @@ docker push "${GLAMOUR_IMAGE}:${GLAMOUR_TAG}"
 ```
 
 Publicar una imagen no crea ni ejecuta el Job. El despliegue y su programación
-son pasos separados. El manejo de fechas cero del extractor sigue pendiente.
+son pasos separados.
 
 ## Referencias
 

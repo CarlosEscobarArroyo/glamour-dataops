@@ -8,15 +8,20 @@ import sys
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
-import google.auth
-from google.cloud import secretmanager, storage
+from google.cloud import storage
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pymysql
 
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config_dev.json"
-MYSQL_SECRET_KEYS = ("MYSQL_HOST", "MYSQL_USER", "MYSQL_PASSWORD", "MYSQL_DATABASE", "MYSQL_PORT")
+# Las pone el Job (src/extraction/job.yaml); MYSQL_PASSWORD llega desde Secret Manager.
+VARIABLES = (
+    "GCS_BUCKET", "MYSQL_HOST", "MYSQL_USER", "MYSQL_PASSWORD",
+    "MYSQL_DATABASE", "MYSQL_PORT",
+)
+
+BATCH_SIZE = 50000  # filas por lote; limita la memoria usada por tabla
+
 TABLAS = (
     "persona",
     "contenido",
@@ -37,59 +42,32 @@ TABLAS = (
     "seccioncontenido",
     "documentofile",
 )
-
-
-class ConfigurationError(ValueError):
-    """Error de configuración cuyo mensaje no contiene datos ni secretos."""
-
-
-def cargar_config() -> dict:
-    try:
-        config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        config = {}
-    except (OSError, ValueError) as error:
-        raise ConfigurationError("No se pudo leer config_dev.json como JSON válido") from error
-
-    for name in ("GOOGLE_CLOUD_PROJECT", "GCS_BUCKET", "EXTRACTION_BATCH_SIZE"):
-        if name in os.environ:
-            config[name] = os.environ[name]
-    secret_names = config.setdefault("secrets", {})
-    if not isinstance(secret_names, dict):
-        raise ConfigurationError("secrets debe ser un objeto con los nombres de los secretos")
-    for key in MYSQL_SECRET_KEYS:
-        name = secret_names.setdefault(key, key)
-        if not isinstance(name, str) or not name.strip():
-            raise ConfigurationError(f"secrets.{key} debe contener el nombre de un secreto")
-    return config
+# Se exportan como texto SQL: el origen contiene fechas cero (0000-00-00) y TIME
+# fuera de 24 horas que Arrow no representa. La capa analítica las convierte.
+TEMPORALES = {"date", "datetime", "timestamp", "time"}
 
 
 def log_event(event: str, severity: str = "INFO", **fields) -> None:
     print(json.dumps({"severity": severity, "event": event, **fields}), flush=True)
 
 
-def get_secret(client, project_id: str, secret_name: str) -> str:
-    name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-    response = client.access_secret_version(request={"name": name})
-    return response.payload.data.decode("UTF-8")
-
-
-def conectar_mysql(client, project_id: str, secret_names: dict):
-    values = {
-        key: get_secret(client, project_id, secret_names[key])
-        for key in MYSQL_SECRET_KEYS
-    }
-    return pymysql.connect(
-        host=values["MYSQL_HOST"],
-        user=values["MYSQL_USER"],
-        password=values["MYSQL_PASSWORD"],
-        database=values["MYSQL_DATABASE"],
-        port=int(values["MYSQL_PORT"]),
-        charset="utf8mb4",
-        connect_timeout=10,
-        read_timeout=300,
-        autocommit=True,
-    )
+def conectar_mysql():
+    try:
+        return pymysql.connect(
+            host=os.environ["MYSQL_HOST"],
+            user=os.environ["MYSQL_USER"],
+            password=os.environ["MYSQL_PASSWORD"],
+            database=os.environ["MYSQL_DATABASE"],
+            port=int(os.environ["MYSQL_PORT"]),
+            charset="utf8mb4",
+            connect_timeout=10,
+            read_timeout=300,
+            autocommit=True,
+        )
+    except (pymysql.MySQLError, ValueError) as error:
+        # Un error de conexión no contiene filas ni la contraseña.
+        log_event("mysql_connection_failed", "ERROR", message=str(error))
+        raise
 
 
 def quoted(identifier: str) -> str:
@@ -109,15 +87,9 @@ def arrow_type(data_type: str, column_type: str, precision, scale):
         return pa.float32()
     if data_type in {"double", "real"}:
         return pa.float64()
-    if data_type == "date":
-        return pa.date32()
-    if data_type == "datetime":
-        return pa.timestamp("us")
-    if data_type == "timestamp":
-        return pa.timestamp("us", tz="UTC")
-    if data_type in {
+    if data_type in TEMPORALES or data_type in {
         "char", "varchar", "tinytext", "text", "mediumtext", "longtext",
-        "enum", "set", "json", "time",
+        "enum", "set", "json",
     }:
         return pa.string()
     if data_type in {
@@ -153,10 +125,8 @@ def esquema_tabla(connection, table: str):
                       column=name, data_type=data_type)
             raise
         fields.append(pa.field(name, dtype, nullable=nullable == "YES"))
-        # MariaDB TIME admite duraciones negativas y superiores a 24 horas.
-        # Su representación textual conserva esos valores en Parquet.
         expression = quoted(name)
-        if data_type == "time":
+        if data_type in TEMPORALES:
             expression = f"CAST({expression} AS CHAR) AS {quoted(name)}"
         expressions.append(expression)
     return pa.schema(fields), ", ".join(expressions)
@@ -200,7 +170,7 @@ def extraer_tabla(connection, bucket, table: str, run_prefix: str, batch_size: i
 def extraer_datos_mysql(connection, bucket, run_prefix: str, batch_size: int):
     results = {}
     log_event("tables_selected", tables=TABLAS)
-    # TIMESTAMP se exporta en UTC; DATETIME conserva su valor sin zona horaria.
+    # El texto de TIMESTAMP queda en UTC; DATETIME conserva su valor sin zona horaria.
     with connection.cursor() as cursor:
         cursor.execute("SET SESSION time_zone = '+00:00'")
     for table in TABLAS:
@@ -222,51 +192,25 @@ def extraer_datos_mysql(connection, bucket, run_prefix: str, batch_size: int):
 
 
 def ejecutar_extraccion() -> None:
-    config = cargar_config()
-    bucket_name = config.get("GCS_BUCKET", "")
-    if not isinstance(bucket_name, str):
-        raise ConfigurationError("GCS_BUCKET debe ser texto")
-    bucket_name = bucket_name.strip()
-    if not bucket_name or "/" in bucket_name:
-        raise ConfigurationError("Configura GCS_BUCKET con el nombre del bucket, sin gs://")
-    try:
-        batch_size = int(config.get("EXTRACTION_BATCH_SIZE", 50000))
-        task_count = int(os.environ.get("CLOUD_RUN_TASK_COUNT", "1"))
-    except (TypeError, ValueError) as error:
-        raise ConfigurationError(
-            "EXTRACTION_BATCH_SIZE y CLOUD_RUN_TASK_COUNT deben ser enteros"
-        ) from error
-    if batch_size < 1:
-        raise ConfigurationError("EXTRACTION_BATCH_SIZE debe ser mayor que cero")
-    if task_count != 1:
-        raise ConfigurationError("Este extractor requiere una sola tarea de Cloud Run")
-
-    credentials, default_project = google.auth.default()
-    project_id = config.get("GOOGLE_CLOUD_PROJECT") or default_project
-    if not project_id:
-        raise ConfigurationError("Configura GOOGLE_CLOUD_PROJECT")
-
+    bucket = os.environ["GCS_BUCKET"]
     started = datetime.now(timezone.utc)
     run_id = f"{started:%Y%m%dT%H%M%SZ}-{uuid4().hex}"
     run_prefix = f"date={started:%Y-%m-%d}/{run_id}"
-    log_event("extraction_started", run_id=run_id, bucket=bucket_name,
-              prefix=run_prefix)
+    log_event("extraction_started", run_id=run_id, bucket=bucket, prefix=run_prefix)
 
-    with (
-        secretmanager.SecretManagerServiceClient(credentials=credentials) as secrets,
-        storage.Client(project=project_id, credentials=credentials) as gcs,
-        conectar_mysql(secrets, project_id, config["secrets"]) as connection,
-    ):
-        extraer_datos_mysql(connection, gcs.bucket(bucket_name), run_prefix, batch_size)
-    log_event("extraction_completed", uri=f"gs://{bucket_name}/{run_prefix}")
+    with storage.Client() as gcs, conectar_mysql() as connection:
+        extraer_datos_mysql(connection, gcs.bucket(bucket), run_prefix, BATCH_SIZE)
+    log_event("extraction_completed", uri=f"gs://{bucket}/{run_prefix}")
 
 
 def main() -> int:
+    faltan = [name for name in VARIABLES if not os.environ.get(name)]
+    if faltan:
+        log_event("extraction_failed", "ERROR",
+                  message=f"Faltan variables de entorno: {', '.join(faltan)}")
+        return 1
     try:
         ejecutar_extraccion()
-    except ConfigurationError as error:
-        log_event("configuration_failed", "ERROR", message=str(error))
-        return 1
     except Exception as error:
         # No enviar credenciales ni valores de filas a Cloud Logging.
         log_event("extraction_failed", "ERROR", error_type=type(error).__name__)

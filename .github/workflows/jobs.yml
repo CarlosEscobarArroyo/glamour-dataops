@@ -1,0 +1,124 @@
+name: Jobs
+
+# Un solo workflow para todos los Cloud Run Jobs. Un componente es una carpeta de
+# src/ con Dockerfile y job.yaml; sus pruebas están en tests/<misma carpeta>/.
+# Pull request: pruebas del componente que cambió. Push a dev o main: además publica
+# la imagen y despliega el Job (dev -> proyecto dev; main -> prod, con aprobación).
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths: ["src/**", "tests/**", ".github/workflows/jobs.yml"]
+  push:
+    branches: [dev, main]
+    paths: ["src/**", "tests/**", ".github/workflows/jobs.yml"]
+  workflow_dispatch:
+    inputs:
+      componente:
+        description: "Carpeta de src/ a desplegar (vacío: todas)"
+        required: false
+
+permissions:
+  contents: read
+  id-token: write # Workload Identity Federation (sin llaves JSON)
+
+jobs:
+  detectar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      componentes: ${{ steps.lista.outputs.componentes }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: lista
+        name: Componentes que cambiaron
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          ELEGIDO: ${{ inputs.componente }}
+        run: |
+          todos=$(for f in src/*/job.yaml; do basename "$(dirname "$f")"; done)
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            cambiados=${ELEGIDO:-$todos}
+          elif ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            cambiados=$todos # rama nueva o historial reescrito: no hay con qué comparar
+          else
+            archivos=$(git diff --name-only "$BASE" "$GITHUB_SHA")
+            if grep -qx '.github/workflows/jobs.yml' <<<"$archivos"; then
+              cambiados=$todos
+            else
+              cambiados=$(sed -nE 's#^(src|tests)/([^/]+)/.*#\2#p' <<<"$archivos" | sort -u)
+            fi
+          fi
+          lista=$(for c in $cambiados; do
+            if [ -f "src/$c/job.yaml" ]; then echo "$c"; fi
+          done | jq -Rnc '[inputs]')
+          echo "componentes=$lista" >> "$GITHUB_OUTPUT"
+          echo "Componentes: $lista"
+
+  pruebas:
+    needs: detectar
+    if: needs.detectar.outputs.componentes != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        componente: ${{ fromJSON(needs.detectar.outputs.componentes) }}
+    env:
+      COMPONENTE: ${{ matrix.componente }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Instalar dependencias
+        run: python -m pip install -r "src/${COMPONENTE}/requirements.txt"
+      - name: Ejecutar pruebas
+        run: python -B -m unittest discover -s "tests/${COMPONENTE}" -v
+
+  desplegar:
+    needs: [detectar, pruebas]
+    if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        componente: ${{ fromJSON(needs.detectar.outputs.componentes) }}
+    # El environment "prod" tiene revisores obligatorios: el despliegue espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    concurrency: jobs-${{ matrix.componente }}-${{ github.ref_name }}
+    env:
+      COMPONENTE: ${{ matrix.componente }}
+      AMBIENTE: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+      # Variables del environment de GitHub (dev o prod).
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      REGION: ${{ vars.REGION }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Construir y publicar la imagen
+        run: |
+          : "${PROJECT_ID:?Falta la variable PROJECT_ID del environment}"
+          : "${REGION:?Falta la variable REGION del environment}"
+          registro="${REGION}-docker.pkg.dev"
+          etiqueta="${registro}/${PROJECT_ID}/${PROJECT_ID}-ar-jobs/${COMPONENTE}:git-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gcloud auth configure-docker "$registro" --quiet
+          docker build --platform linux/amd64 -t "$etiqueta" "src/${COMPONENTE}"
+          docker push "$etiqueta"
+          # Se despliega por digest: identifica exactamente la imagen publicada.
+          echo "IMAGE=$(docker inspect --format '{{index .RepoDigests 0}}' "$etiqueta")" >> "$GITHUB_ENV"
+      - name: Desplegar el Job
+        run: |
+          envsubst '${PROJECT_ID} ${AMBIENTE} ${REGION} ${IMAGE}' < "src/${COMPONENTE}/job.yaml" > "$RUNNER_TEMP/job.yaml"
+          if grep -n '\${' "$RUNNER_TEMP/job.yaml"; then
+            echo "::error::Quedan marcadores sin resolver en src/${COMPONENTE}/job.yaml"
+            exit 1
+          fi
+          gcloud run jobs replace "$RUNNER_TEMP/job.yaml" --region "$REGION" --project "$PROJECT_ID"

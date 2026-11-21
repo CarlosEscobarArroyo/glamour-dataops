@@ -4,24 +4,32 @@ import io
 import json
 import os
 from pathlib import Path
-from tempfile import TemporaryDirectory
+import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pymysql
 
-import extract as extraction
+# tests/ replica la estructura de src/: el código probado vive en src/extraction/.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src" / "extraction"))
+
+import extract as extraction  # noqa: E402
+
+
+ENTORNO = {
+    "GCS_BUCKET": "landing",
+    "MYSQL_HOST": "db.example.test",
+    "MYSQL_USER": "reader",
+    "MYSQL_PASSWORD": "test-password",
+    "MYSQL_DATABASE": "glamour",
+    "MYSQL_PORT": "3306",
+}
 
 
 class ExtractionTests(unittest.TestCase):
     def setUp(self):
-        directory = TemporaryDirectory(prefix="glamour-config-test-")
-        self.addCleanup(directory.cleanup)
-        self.config_path = Path(directory.name) / "config_dev.json"
-        config_patch = patch.object(extraction, "CONFIG_PATH", self.config_path)
-        config_patch.start()
-        self.addCleanup(config_patch.stop)
         self.log_patch = patch.object(extraction, "log_event")
         self.log_event = self.log_patch.start()
         self.addCleanup(self.log_patch.stop)
@@ -99,6 +107,23 @@ class ExtractionTests(unittest.TestCase):
         table = next(iter(uploaded.values()))
         self.assertEqual(table["duracion"].to_pylist(), ["-838:59:59.123456"])
 
+    def test_zero_dates_are_preserved_as_text(self):
+        columns = [
+            ("dfecha", "date", "date", None, None, "YES"),
+            ("dregistro", "datetime", "datetime", None, None, "YES"),
+            ("dmodifica", "timestamp", "timestamp", None, None, "NO"),
+        ]
+        row = ("0000-00-00", "0000-00-00 00:00:00", "2026-10-30 12:00:00")
+        connection, stream = self.connection(columns, [[row], []])
+        bucket, uploaded = self.capturing_bucket()
+        extraction.extraer_tabla(connection, bucket, "campana", "run", 10)
+        query = stream.execute.call_args.args[0]
+        for name, *_ in columns:
+            self.assertIn(f"CAST(`{name}` AS CHAR) AS `{name}`", query)
+        table = next(iter(uploaded.values()))
+        self.assertEqual(table.to_pylist(), [dict(zip(table.schema.names, row))])
+        self.assertTrue(all(field.type == pa.string() for field in table.schema))
+
     def test_failure_does_not_publish_a_complete_manifest(self):
         bucket = MagicMock()
         with patch.object(extraction, "extraer_tabla", side_effect=[{"rows": 1}, RuntimeError("upload")]):
@@ -146,87 +171,67 @@ class ExtractionTests(unittest.TestCase):
     def test_job_returns_failure_without_logging_source_values(self):
         self.log_patch.stop()
         output = io.StringIO()
-        with patch.object(extraction, "ejecutar_extraccion", side_effect=ValueError("sensitive row value")):
-            with redirect_stdout(output):
-                code = extraction.main()
+        with (
+            patch.dict(os.environ, ENTORNO, clear=True),
+            patch.object(extraction, "ejecutar_extraccion", side_effect=ValueError("sensitive row value")),
+            redirect_stdout(output),
+        ):
+            code = extraction.main()
         self.assertEqual(code, 1)
         self.assertNotIn("sensitive row value", output.getvalue())
         self.assertEqual(json.loads(output.getvalue())["severity"], "ERROR")
 
-    def test_invalid_configuration_fails_before_authenticating(self):
-        cases = [
-            {"GCS_BUCKET": ""},
-            {"GCS_BUCKET": "gs://landing"},
-            {"GCS_BUCKET": "landing", "EXTRACTION_BATCH_SIZE": "0"},
-            {"GCS_BUCKET": "landing", "EXTRACTION_BATCH_SIZE": "invalid"},
-            {"GCS_BUCKET": "landing", "CLOUD_RUN_TASK_COUNT": "2"},
-        ]
-        for environment in cases:
-            with self.subTest(environment=environment):
-                with patch.dict(os.environ, environment, clear=True):
-                    with patch.object(extraction.google.auth, "default") as auth:
-                        self.assertEqual(extraction.main(), 1)
-                        auth.assert_not_called()
+    def test_missing_variables_are_named_and_stop_before_extracting(self):
+        entorno = {k: v for k, v in ENTORNO.items() if k not in ("MYSQL_HOST", "MYSQL_PORT")}
+        entorno["GCS_BUCKET"] = ""  # una variable vacía también cuenta como ausente
+        with (
+            patch.dict(os.environ, entorno, clear=True),
+            patch.object(extraction, "ejecutar_extraccion") as run,
+        ):
+            self.assertEqual(extraction.main(), 1)
+        run.assert_not_called()
+        self.assertEqual(
+            self.log_event.call_args.kwargs["message"],
+            "Faltan variables de entorno: GCS_BUCKET, MYSQL_HOST, MYSQL_PORT",
+        )
 
-    def test_local_config_preserves_secret_names_and_allows_environment_override(self):
-        self.config_path.write_text(json.dumps({
-            "GOOGLE_CLOUD_PROJECT": "project-dev",
-            "GCS_BUCKET": "landing-dev",
-            "EXTRACTION_BATCH_SIZE": 100,
-            "secrets": {"MYSQL_PASSWORD": "MYSQL_PASSWORD_DEV"},
-        }), encoding="utf-8")
-        with patch.dict(os.environ, {"GCS_BUCKET": "landing-override"}, clear=True):
-            config = extraction.cargar_config()
-        self.assertEqual(config["GOOGLE_CLOUD_PROJECT"], "project-dev")
-        self.assertEqual(config["GCS_BUCKET"], "landing-override")
-        self.assertEqual(config["EXTRACTION_BATCH_SIZE"], 100)
-        self.assertEqual(config["secrets"]["MYSQL_PASSWORD"], "MYSQL_PASSWORD_DEV")
-        self.assertEqual(config["secrets"]["MYSQL_HOST"], "MYSQL_HOST")
+    def test_connection_uses_environment_values(self):
+        with (
+            patch.dict(os.environ, ENTORNO, clear=True),
+            patch.object(extraction.pymysql, "connect") as connect,
+        ):
+            extraction.conectar_mysql()
+        kwargs = connect.call_args.kwargs
+        self.assertEqual(kwargs["host"], "db.example.test")
+        self.assertEqual(kwargs["user"], "reader")
+        self.assertEqual(kwargs["password"], "test-password")
+        self.assertEqual(kwargs["database"], "glamour")
+        self.assertEqual(kwargs["port"], 3306)
 
-    def test_custom_names_fetch_secret_values_before_connecting_to_mysql(self):
-        names = {key: f"{key}_DEV" for key in extraction.MYSQL_SECRET_KEYS}
-        values = [b"db.example.test", b"reader", b"test-password", b"glamour", b"3306"]
-        secrets = MagicMock()
-        responses = []
-        for value in values:
-            response = MagicMock()
-            response.payload.data = value
-            responses.append(response)
-        secrets.access_secret_version.side_effect = responses
+    def test_connection_failure_logs_the_cause_without_the_password(self):
+        error = pymysql.err.OperationalError(
+            1045, "Access denied for user 'reader'@'10.0.0.1' (using password: YES)"
+        )
+        with (
+            patch.dict(os.environ, ENTORNO, clear=True),
+            patch.object(extraction.pymysql, "connect", side_effect=error),
+            self.assertRaises(pymysql.MySQLError),
+        ):
+            extraction.conectar_mysql()
+        call = self.log_event.call_args
+        self.assertEqual(call.args[0], "mysql_connection_failed")
+        self.assertIn("Access denied", call.kwargs["message"])
+        self.assertNotIn("test-password", call.kwargs["message"])
 
-        with patch.object(extraction.pymysql, "connect") as connect:
-            extraction.conectar_mysql(secrets, "project-dev", names)
-
-        resources = [
-            call.kwargs["request"]["name"]
-            for call in secrets.access_secret_version.call_args_list
-        ]
-        self.assertEqual(resources, [
-            f"projects/project-dev/secrets/{name}/versions/latest"
-            for name in names.values()
-        ])
-        self.assertEqual(connect.call_args.kwargs["host"], "db.example.test")
-        self.assertEqual(connect.call_args.kwargs["password"], "test-password")
-        self.assertEqual(connect.call_args.kwargs["port"], 3306)
-
-    def test_missing_local_file_uses_cloud_run_environment(self):
-        with patch.dict(os.environ, {"GCS_BUCKET": "landing-cloud"}, clear=True):
-            config = extraction.cargar_config()
-        self.assertEqual(config["GCS_BUCKET"], "landing-cloud")
-        self.assertEqual(config["secrets"], {key: key for key in extraction.MYSQL_SECRET_KEYS})
-
-    def test_invalid_local_config_reports_configuration_error_before_authenticating(self):
-        for content in ("{invalid-json", "[]", "null", "true", "42", '"invalid"',
-                        '{"secrets": "invalid"}'):
-            with self.subTest(content=content):
-                self.config_path.write_text(content, encoding="utf-8")
-                with (
-                    patch.dict(os.environ, {}, clear=True),
-                    patch.object(extraction.google.auth, "default") as auth,
-                ):
-                    self.assertEqual(extraction.main(), 1)
-                    auth.assert_not_called()
-                self.assertEqual(self.log_event.call_args.args[0], "configuration_failed")
+    def test_non_numeric_port_is_reported_as_a_connection_failure(self):
+        with (
+            patch.dict(os.environ, {**ENTORNO, "MYSQL_PORT": "abc"}, clear=True),
+            patch.object(extraction.pymysql, "connect") as connect,
+            self.assertRaises(ValueError),
+        ):
+            extraction.conectar_mysql()
+        connect.assert_not_called()
+        self.assertEqual(self.log_event.call_args.args[0], "mysql_connection_failed")
 
 
 if __name__ == "__main__":
