@@ -49,7 +49,6 @@ locals {
     "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountUser",
     "roles/resourcemanager.projectIamAdmin",
-    "roles/run.admin",
     "roles/secretmanager.admin",
     "roles/storage.admin",
     "roles/workflows.admin",
@@ -81,7 +80,7 @@ resource "google_storage_bucket" "tfstate" {
 }
 
 resource "google_service_account" "terraform" {
-  account_id   = "sa-terraform"
+  account_id   = "sa-terraform-${regex("[^-]+$", var.project_id)}" # sa-terraform-dev
   display_name = "Terraform desde GitHub Actions"
   depends_on   = [google_project_service.apis]
 }
@@ -101,20 +100,21 @@ resource "google_storage_bucket_iam_member" "terraform_estado" {
 
 # Workload Identity Federation: GitHub Actions entra sin llaves JSON.
 resource "google_iam_workload_identity_pool" "github" {
-  workload_identity_pool_id = "github"
+  workload_identity_pool_id = "wif-github"
   display_name              = "GitHub Actions"
   depends_on                = [google_project_service.apis]
 }
 
 resource "google_iam_workload_identity_pool_provider" "github" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
-  workload_identity_pool_provider_id = "github-oidc"
+  workload_identity_pool_provider_id = "wif-github-oidc"
   display_name                       = "GitHub OIDC"
 
   attribute_mapping = {
-    "google.subject"       = "assertion.sub"
-    "attribute.repository" = "assertion.repository"
-    "attribute.ref"        = "assertion.ref"
+    "google.subject"        = "assertion.sub"
+    "attribute.repository"  = "assertion.repository"
+    "attribute.ref"         = "assertion.ref"
+    "attribute.environment" = "assertion.environment" # lo usa sa-deploy (modules/iam)
   }
 
   # Solo los tokens de este repositorio pueden canjearse.

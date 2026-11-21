@@ -7,7 +7,7 @@ resource "google_compute_network" "vpc" {
 }
 
 resource "google_compute_subnetwork" "jobs" {
-  name                     = "${var.prefijo}-jobs"
+  name                     = "${var.prefijo}-snet-${var.region}"
   network                  = google_compute_network.vpc.id
   region                   = var.region
   ip_cidr_range            = var.cidr
@@ -15,13 +15,13 @@ resource "google_compute_subnetwork" "jobs" {
 }
 
 resource "google_compute_router" "router" {
-  name    = "${var.prefijo}-router"
+  name    = "${var.prefijo}-rtr-egress"
   network = google_compute_network.vpc.id
   region  = var.region
 }
 
 resource "google_compute_address" "nat_ip" {
-  name   = "${var.prefijo}-nat-ip"
+  name   = "${var.prefijo}-ip-egress"
   region = var.region
 
   lifecycle {
@@ -30,17 +30,12 @@ resource "google_compute_address" "nat_ip" {
 }
 
 resource "google_compute_router_nat" "nat" {
-  name                               = "${var.prefijo}-nat"
+  name                               = "${var.prefijo}-nat-egress"
   router                             = google_compute_router.router.name
   region                             = var.region
   nat_ip_allocate_option             = "MANUAL_ONLY"
   nat_ips                            = [google_compute_address.nat_ip.self_link]
-  source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
-
-  subnetwork {
-    name                    = google_compute_subnetwork.jobs.id
-    source_ip_ranges_to_nat = ["ALL_IP_RANGES"]
-  }
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES" # toda la red sale por la IP fija
 
   log_config {
     enable = true

@@ -1,5 +1,5 @@
 variable "nombres" {
-  description = "Nombres de los secretos; deben coincidir con la sección secrets de config_dev.json."
+  description = "Nombres de los secretos; los Jobs los referencian en su job.yaml (secretKeyRef)."
   type        = list(string)
 }
 

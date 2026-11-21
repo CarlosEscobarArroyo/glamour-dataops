@@ -9,14 +9,13 @@ Nadie crea ni cambia recursos a mano en la consola: un cambio entra por pull req
 ```text
 infra/
 ├── bootstrap/            Se corre una vez por proyecto, a mano: APIs, bucket del
-│                         estado, sa-terraform y Workload Identity Federation.
+│                         estado, sa-terraform-<ambiente> y Workload Identity Federation.
 ├── modules/
 │   ├── iam/              Cuentas de servicio y roles de proyecto (pipeline y equipo).
 │   ├── vpc/              VPC, subred, Cloud Router, IP fija y Cloud NAT.
-│   ├── secrets/          Los cinco secretos MYSQL_* (vacíos) y quién los lee.
+│   ├── secrets/          El secreto MYSQL_PASSWORD (vacío) y quién lo lee.
 │   ├── storage/          Landing zone (Parquet) y bucket de Data Docs.
 │   ├── bigquery/         Datasets staging y dimensional, con sus accesos.
-│   ├── cloud_run_job/    Job genérico (extracción y calidad).
 │   └── orchestration/    Cloud Workflows y Cloud Scheduler (5:00 a. m., Lima).
 └── environments/
     ├── dev/              glamour-dataops-dev  (rama dev)
@@ -30,16 +29,17 @@ y `backend.tf`.
 
 | Cuenta | Puede | Sobre |
 | --- | --- | --- |
-| `sa-extractor` | Crear objetos (no borrar ni sobrescribir) | Bucket landing |
-| | Leer el valor | Los cinco secretos `MYSQL_*` |
-| `sa-calidad` | Leer tablas y ejecutar consultas | Dataset `staging` |
+| `sa-extraction-<ambiente>` | Crear objetos (no borrar ni sobrescribir) | Bucket landing |
+| | Leer el valor | Secreto `MYSQL_PASSWORD` |
+| `sa-calidad-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `staging` |
 | | Escribir Data Docs | Bucket de Data Docs |
-| `sa-workflows` | Ejecutar los Jobs | Los dos Cloud Run Jobs |
+| `sa-workflows-<ambiente>` | Ejecutar los Jobs | Proyecto (los Jobs los crea el CI) |
 | | Leer Parquet | Bucket landing |
 | | Editar tablas y ejecutar consultas | Datasets `staging` y `dimensional` |
-| `sa-scheduler` | Iniciar ejecuciones del workflow | Proyecto |
-| `sa-looker` | Leer tablas | Solo `dimensional` |
-| `sa-terraform` | Administrar la plataforma (sin `owner`) | Proyecto; solo la usa GitHub Actions |
+| `sa-scheduler-<ambiente>` | Iniciar ejecuciones del workflow | Proyecto |
+| `sa-looker-<ambiente>` | Leer tablas | Solo `dimensional` |
+| `sa-deploy-<ambiente>` | Publicar imágenes y desplegar Jobs | Repositorio de imágenes y proyecto; solo desde el environment de GitHub de su ambiente |
+| `sa-terraform-<ambiente>` | Administrar la plataforma (sin `owner`) | Proyecto; solo la usa GitHub Actions |
 
 Los integrantes reciben los roles de la sección 7 del README principal
 (variable `equipo` en `terraform.tfvars`).
@@ -58,8 +58,8 @@ Los integrantes reciben los roles de la sección 7 del README principal
    Su estado queda local (`terraform.tfstate`, ignorado por git). Para `prod`,
    repetir en otra carpeta o con `terraform workspace new prod`.
 
-2. En GitHub, *Settings > Secrets and variables > Actions > Variables*, crear
-   con los outputs del paso 1:
+2. En GitHub, *Settings > Secrets and variables > Actions > Variables*, crear a
+   nivel de repositorio, con los outputs del paso 1:
 
    | Variable | Valor |
    | --- | --- |
@@ -67,19 +67,36 @@ Los integrantes reciben los roles de la sección 7 del README principal
    | `TF_SA_DEV` / `TF_SA_PROD` | output `terraform_sa_email` |
 
 3. En *Settings > Environments*, crear `dev` y `prod`. A `prod` agregarle
-   revisores obligatorios: así ningún `apply` llega a producción sin aprobación.
+   revisores obligatorios: así ningún `apply` ni despliegue llega a producción sin
+   aprobación. En cada environment, crear las variables que usa
+   [`jobs.yml`](../.github/workflows/jobs.yml):
 
-4. Hacer merge a `dev`. GitHub Actions aplica la infraestructura.
+   | Variable | Valor (dev) |
+   | --- | --- |
+   | `PROJECT_ID` | `glamour-dataops-dev` |
+   | `REGION` | `us-east1` |
+   | `WIF_PROVIDER` | output `wif_provider` del paso 1 |
+   | `DEPLOY_SA` | `sa-deploy-dev@glamour-dataops-dev.iam.gserviceaccount.com` |
 
-5. Cargar los valores de los secretos (nunca en el repo ni en Terraform):
+4. Si el secreto `MYSQL_PASSWORD` ya existe en el proyecto, importarlo antes del
+   primer `apply` para que Terraform no intente crearlo de nuevo:
+
+   ```bash
+   cd infra/environments/dev
+   terraform init
+   terraform import 'module.secrets.google_secret_manager_secret.secreto["MYSQL_PASSWORD"]' projects/glamour-dataops-dev/secrets/MYSQL_PASSWORD
+   ```
+
+5. Hacer merge a `dev`. GitHub Actions aplica la infraestructura y después
+   `jobs.yml` puede desplegar los Jobs.
+
+6. Si el secreto es nuevo, cargar su valor (nunca en el repo ni en Terraform):
 
    ```bash
    printf '%s' 'valor' | gcloud secrets versions add MYSQL_PASSWORD --data-file=- --project=glamour-dataops-dev
    ```
 
-   Repetir con `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_DATABASE` y `MYSQL_PORT`.
-
-6. Pedir al proveedor de MariaDB que autorice la IP del output
+7. Pedir al proveedor de MariaDB que autorice la IP del output
    `ip_para_firewall_mariadb` en el puerto 3306, para un usuario de solo lectura.
 
 ## Flujo de trabajo
@@ -95,16 +112,14 @@ despliega desde aquí).
 
 ## Acuerdos con los otros frentes
 
-- **Imágenes (CI/CD):** Terraform crea los Jobs con una imagen de ejemplo y luego
-  ignora la imagen. El pipeline de contenedores publica en
-  `<region>-docker.pkg.dev/<proyecto>/<proyecto>-ar-jobs/` (imágenes `extraction` y `quality`, ver `docs/artifact_registry.md`) y actualiza el Job con
-  `gcloud run jobs update <job> --image <imagen>@sha256:<digest>`.
+- **Jobs (CI/CD):** Terraform no crea los Cloud Run Jobs. Los despliega
+  [`jobs.yml`](../.github/workflows/jobs.yml) desde `src/<componente>/job.yaml`, con
+  la imagen publicada en `<region>-docker.pkg.dev/<proyecto>/<proyecto>-ar-jobs/`
+  (ver `docs/artifact_registry.md`). Terraform aporta la red, las cuentas, el
+  secreto, el bucket y el repositorio de imágenes que ese archivo referencia.
 - **Orquestación:** el flujo se lee de `orchestration/workflow_comercial.yaml`.
   Mientras no exista, se despliega `modules/orchestration/provisional.yaml`.
   El flujo recibe por `sys.get_env` los nombres de los Jobs, del bucket y de los datasets.
-- **Calidad:** el Job recibe `GOOGLE_CLOUD_PROJECT`, `BQ_DATASET` y `DATA_DOCS_BUCKET`.
-- **Extracción:** el Job recibe las mismas variables que `config_dev.json`
-  (`GCS_BUCKET` sale del output `landing_bucket`).
 
 ## Protecciones
 

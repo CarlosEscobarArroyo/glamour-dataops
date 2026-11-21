@@ -4,7 +4,7 @@ output "ip_para_firewall_mariadb" {
 }
 
 output "landing_bucket" {
-  description = "Valor de GCS_BUCKET en config_dev.json."
+  description = "Bucket de la landing (GCS_BUCKET en src/extraction/job.yaml)."
   value       = module.storage.landing_bucket
 }
 

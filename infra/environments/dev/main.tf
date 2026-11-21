@@ -2,9 +2,8 @@
 # lo que cambia entre entornos está en terraform.tfvars y backend.tf.
 
 locals {
-  prefijo        = "glamour"
-  ruta_workflow  = "${path.root}/../../../orchestration/workflow_comercial.yaml"
-  secretos_mysql = ["MYSQL_HOST", "MYSQL_USER", "MYSQL_PASSWORD", "MYSQL_DATABASE", "MYSQL_PORT"]
+  prefijo       = var.project_id # convención: <proyecto>-<tipo>-<propósito>
+  ruta_workflow = "${path.root}/../../../orchestration/workflow_comercial.yaml"
 }
 
 module "iam" {
@@ -21,9 +20,9 @@ module "vpc" {
 
 module "secrets" {
   source  = "../../modules/secrets"
-  nombres = local.secretos_mysql
+  nombres = ["MYSQL_PASSWORD"] # el único secreto; el resto de la conexión va en job.yaml
   lectores = {
-    extractor = module.iam.members.extractor
+    extraction = module.iam.members.extraction
   }
 }
 
@@ -33,7 +32,7 @@ module "storage" {
   region         = var.region
   retencion_dias = var.retencion_dias
 
-  landing_escritores   = { extractor = module.iam.members.extractor }
+  landing_escritores   = { extraction = module.iam.members.extraction }
   landing_lectores     = { workflows = module.iam.members.workflows } # carga de la landing a staging
   landing_listadores   = module.iam.equipo_members
   data_docs_escritores = { calidad = module.iam.members.calidad }
@@ -62,38 +61,13 @@ resource "google_artifact_registry_repository" "imagenes" {
   }
 }
 
-module "job_extraccion" {
-  source              = "../../modules/cloud_run_job"
-  nombre              = "${local.prefijo}-extraccion"
-  region              = var.region
-  service_account     = module.iam.emails.extractor
-  network_id          = module.vpc.network_id
-  subnet_id           = module.vpc.subnet_id
-  memoria             = "4Gi"
-  deletion_protection = var.proteger
-  ejecutores          = { workflows = module.iam.members.workflows }
-
-  # Las mismas variables que lee src/extraction/extract.py.
-  env = {
-    GOOGLE_CLOUD_PROJECT  = var.project_id
-    GCS_BUCKET            = module.storage.landing_bucket
-    EXTRACTION_BATCH_SIZE = "50000"
-  }
-}
-
-module "job_calidad" {
-  source              = "../../modules/cloud_run_job"
-  nombre              = "${local.prefijo}-calidad"
-  region              = var.region
-  service_account     = module.iam.emails.calidad
-  deletion_protection = var.proteger
-  ejecutores          = { workflows = module.iam.members.workflows }
-
-  env = {
-    GOOGLE_CLOUD_PROJECT = var.project_id
-    BQ_DATASET           = module.bigquery.staging_dataset
-    DATA_DOCS_BUCKET     = module.storage.data_docs_bucket
-  }
+# Los Cloud Run Jobs no se crean aquí: los despliega el CI (.github/workflows/jobs.yml)
+# desde src/<componente>/job.yaml. Terraform solo le da a sa-deploy lo que necesita.
+resource "google_artifact_registry_repository_iam_member" "deploy" {
+  repository = google_artifact_registry_repository.imagenes.name
+  location   = google_artifact_registry_repository.imagenes.location
+  role       = "roles/artifactregistry.writer"
+  member     = module.iam.members.deploy
 }
 
 module "orchestration" {
@@ -107,8 +81,9 @@ module "orchestration" {
   deletion_protection = var.proteger
 
   variables = {
-    JOB_EXTRACCION    = module.job_extraccion.nombre
-    JOB_CALIDAD       = module.job_calidad.nombre
+    # Nombres que el CI da a los Jobs (metadata.name de cada job.yaml).
+    JOB_EXTRACCION    = "${local.prefijo}-crj-extraction"
+    JOB_CALIDAD       = "${local.prefijo}-crj-quality"
     LANDING_BUCKET    = module.storage.landing_bucket
     DATASET_STAGING   = module.bigquery.staging_dataset
     DATASET_DIMENSION = module.bigquery.dimensional_dataset

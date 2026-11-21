@@ -4,7 +4,7 @@ variable "project_id" {
 
 variable "region" {
   type    = string
-  default = "us-central1"
+  default = "us-east1"
 }
 
 variable "bq_location" {
@@ -29,7 +29,7 @@ variable "scheduler_pausado" {
 }
 
 variable "proteger" {
-  description = "Protección contra borrado de Jobs y del workflow."
+  description = "Protección contra borrado del workflow."
   type        = bool
   default     = true
 }
