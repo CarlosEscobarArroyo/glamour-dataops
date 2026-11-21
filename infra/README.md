@@ -30,20 +30,15 @@ y `backend.tf`.
 | Cuenta | Puede | Sobre |
 | --- | --- | --- |
 | `sa-extraction-<ambiente>` | Crear objetos (no borrar ni sobrescribir) | Bucket landing |
-<<<<<<< HEAD
-| | Leer el valor | Secreto `MYSQL_PASSWORD` |
-| `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `bq_staging` |
-=======
 | | Leer el valor | Secretos `MYSQL_HOST` y `MYSQL_PASSWORD` |
-| `sa-calidad-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `staging` |
->>>>>>> 1ae7f82 (feat(infra): crea el secreto MYSQL_HOST y da lectura al extractor)
+| `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `bq_staging` |
 | | Escribir Data Docs | Bucket de Data Docs |
 | `sa-workflows-<ambiente>` | Ejecutar los Jobs | Proyecto (los Jobs los crea el CI) |
 | | Leer Parquet | Bucket landing |
 | | Editar tablas y ejecutar consultas | Datasets `bq_staging` y `bq_dimensional` |
 | `sa-scheduler-<ambiente>` | Iniciar ejecuciones del workflow | Proyecto |
 | `sa-looker-<ambiente>` | Leer tablas | Solo `bq_dimensional` |
-| `sa-deploy-<ambiente>` | Publicar imágenes y desplegar Jobs | Repositorio de imágenes y proyecto; solo desde el environment de GitHub de su ambiente |
+| `sa-deploy-<ambiente>` | Publicar imágenes, desplegar Jobs y publicar el workflow | Repositorio de imágenes y proyecto; solo desde el environment de GitHub de su ambiente |
 | `sa-terraform-<ambiente>` | Administrar la plataforma (sin `owner`) | Proyecto; solo la usa GitHub Actions |
 
 Los integrantes reciben los roles de la sección 7 del README principal
@@ -114,8 +109,7 @@ Los integrantes reciben los roles de la sección 7 del README principal
 | Merge a `dev` | `apply` en `glamour-dataops-dev` |
 | Merge a `main` | `apply` en `glamour-dataops-prod`, después de la aprobación |
 
-Se dispara con cambios en `infra/` o en `orchestration/` (el YAML del workflow se
-despliega desde aquí).
+Se dispara con cambios en `infra/`.
 
 ## Acuerdos con los otros frentes
 
@@ -124,8 +118,10 @@ despliega desde aquí).
   la imagen publicada en `<region>-docker.pkg.dev/<proyecto>/<proyecto>-ar-jobs/`
   (ver `docs/artifact_registry.md`). Terraform aporta la red, las cuentas, el
   secreto, el bucket y el repositorio de imágenes que ese archivo referencia.
-- **Orquestación:** el flujo se lee de `orchestration/workflow_comercial.yaml`.
-  Mientras no exista, se despliega `modules/orchestration/provisional.yaml`.
+- **Orquestación:** Terraform crea el workflow con su cuenta, sus variables y el
+  flujo provisional de `modules/orchestration/provisional.yaml`, y no vuelve a tocar
+  su contenido. La definición real, `src/orchestration/workflow_comercial.yaml`, la
+  publica [`orchestration.yml`](../.github/workflows/orchestration.yml).
   El flujo recibe por `sys.get_env` los nombres de los Jobs, del bucket y de los datasets.
 
 ## Protecciones

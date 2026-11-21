@@ -12,7 +12,7 @@ locals {
     workflows  = "Orquestador Cloud Workflows"
     scheduler  = "Disparador diario de Cloud Scheduler"
     looker     = "Lectura del modelo dimensional para Looker Studio"
-    deploy     = "Despliegue de los Cloud Run Jobs desde GitHub Actions"
+    deploy     = "Despliegue de los Jobs y del workflow desde GitHub Actions"
   }
 
   roles_proyecto = {
@@ -22,8 +22,9 @@ locals {
     "scheduler-invoker" = { cuenta = "scheduler", rol = "roles/workflows.invoker" }
     "looker-jobuser"    = { cuenta = "looker", rol = "roles/bigquery.jobUser" }
     # A nivel de proyecto porque los Jobs los crea el CI, no Terraform.
-    "workflows-jobs" = { cuenta = "workflows", rol = "roles/run.jobsExecutorWithOverrides" }
-    "deploy-run"     = { cuenta = "deploy", rol = "roles/run.developer" }
+    "workflows-jobs"   = { cuenta = "workflows", rol = "roles/run.jobsExecutorWithOverrides" }
+    "deploy-run"       = { cuenta = "deploy", rol = "roles/run.developer" }
+    "deploy-workflows" = { cuenta = "deploy", rol = "roles/workflows.editor" }
   }
 
   # Roles del equipo definidos en el README (sección 7): ver y operar, no administrar datos.
@@ -58,9 +59,9 @@ resource "google_project_iam_member" "equipo" {
   member   = "user:${each.value[0]}"
 }
 
-# sa-deploy asigna a cada Job su cuenta de ejecución.
+# sa-deploy asigna a cada Job y al workflow su cuenta de ejecución.
 resource "google_service_account_iam_member" "deploy_usa" {
-  for_each           = toset(["extraction", "quality"])
+  for_each           = toset(["extraction", "quality", "workflows"])
   service_account_id = google_service_account.sa[each.key].name
   role               = "roles/iam.serviceAccountUser"
   member             = google_service_account.sa["deploy"].member

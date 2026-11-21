@@ -2,8 +2,7 @@
 # lo que cambia entre entornos está en terraform.tfvars y backend.tf.
 
 locals {
-  prefijo       = var.project_id # convención: <proyecto>-<tipo>-<propósito>
-  ruta_workflow = "${path.root}/../../../orchestration/workflow_comercial.yaml"
+  prefijo = var.project_id # convención: <proyecto>-<tipo>-<propósito>
 }
 
 module "iam" {
@@ -76,7 +75,6 @@ module "orchestration" {
   region              = var.region
   workflows_sa        = module.iam.emails.workflows
   scheduler_sa        = module.iam.emails.scheduler
-  definicion          = fileexists(local.ruta_workflow) ? file(local.ruta_workflow) : null
   pausado             = var.scheduler_pausado
   deletion_protection = var.proteger
 

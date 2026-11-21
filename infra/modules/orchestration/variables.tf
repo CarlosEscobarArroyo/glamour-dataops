@@ -14,12 +14,6 @@ variable "scheduler_sa" {
   type = string
 }
 
-variable "definicion" {
-  description = "YAML del flujo. Si es null, se usa provisional.yaml."
-  type        = string
-  default     = null
-}
-
 variable "variables" {
   description = "Variables que el flujo lee con sys.get_env (nombres de Jobs, datasets, etc.)."
   type        = map(string)
