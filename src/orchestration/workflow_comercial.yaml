@@ -1,0 +1,104 @@
+# Pipeline comercial diario. Lo dispara Cloud Scheduler y lo despliega Terraform
+# (infra/modules/orchestration), que también define las variables de sys.get_env.
+#
+# Pasos implementados:
+#   1. Ejecuta el Job de extracción: MariaDB -> Parquet en la landing.
+#   2. Carga cada tabla de esa extracción en el dataset staging de BigQuery.
+# Pendientes: calidad (Great Expectations) y transformación al modelo dimensional.
+main:
+  params: [args]
+  steps:
+    - configuracion:
+        assign:
+          - proyecto: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - region: ${sys.get_env("GOOGLE_CLOUD_LOCATION")}
+          - bucket: ${sys.get_env("LANDING_BUCKET")}
+          - dataset: ${sys.get_env("DATASET_STAGING")}
+          - job: ${sys.get_env("JOB_EXTRACCION")}
+
+    # Si la extracción falla se reintenta una vez. Cada intento escribe en una
+    # carpeta nueva, porque el extractor nunca sobrescribe archivos.
+    - extraer:
+        try:
+          steps:
+            # Carpeta de la ejecución, con fecha y hora de Perú:
+            # date=AAAA-MM-DD/AAAAMMDDTHHMMSS-<id de la ejecución del workflow>
+            - definir_carpeta:
+                assign:
+                  - ahora: ${time.format(sys.now(), "America/Lima")}
+                  - fecha: ${text.substring(ahora, 0, 10)}
+                  - hora: ${text.substring(ahora, 11, 19)}
+                  - run_id: ${text.replace_all(fecha, "-", "") + "T" + text.replace_all(hora, ":", "") + "-" + sys.get_env("GOOGLE_CLOUD_WORKFLOW_EXECUTION_ID")}
+                  - run_prefix: ${"date=" + fecha + "/" + run_id}
+            # Espera a que el Job termine. El extractor escribe en RUN_PREFIX.
+            - ejecutar_job:
+                call: googleapis.run.v1.namespaces.jobs.run
+                args:
+                  name: ${"namespaces/" + proyecto + "/jobs/" + job}
+                  location: ${region}
+                  body:
+                    overrides:
+                      containerOverrides:
+                        env:
+                          - name: RUN_PREFIX
+                            value: ${run_prefix}
+                  connector_params:
+                    timeout: 3900  # algo más que el timeout del Job (3600 s)
+            # El manifiesto solo existe si se extrajeron todas las tablas; si
+            # falta, este paso falla y la extracción se reintenta.
+            - leer_manifiesto:
+                call: googleapis.storage.v1.objects.get
+                args:
+                  bucket: ${bucket}
+                  object: ${text.url_encode(run_prefix + "/manifest.json")}
+                  alt: media
+                result: contenido_manifiesto
+            - interpretar_manifiesto:
+                assign:
+                  - manifiesto: ${json.decode(text.decode(contenido_manifiesto))}
+        retry:
+          predicate: ${reintentar_siempre}
+          max_retries: 1
+          backoff:
+            initial_delay: 60
+            max_delay: 60
+            multiplier: 1
+
+    # Un load job por tabla, en paralelo. Cada extracción es una copia completa,
+    # así que la tabla de staging se reemplaza entera (WRITE_TRUNCATE). El
+    # esquema se toma de los propios Parquet.
+    - cargar_staging:
+        parallel:
+          for:
+            value: tabla
+            in: ${manifiesto.selected_tables}
+            steps:
+              - cargar_tabla:
+                  call: googleapis.bigquery.v2.jobs.insert
+                  args:
+                    projectId: ${proyecto}
+                    body:
+                      configuration:
+                        load:
+                          sourceUris:
+                            - ${"gs://" + bucket + "/" + run_prefix + "/" + tabla + "/*.parquet"}
+                          sourceFormat: PARQUET
+                          writeDisposition: WRITE_TRUNCATE
+                          # Sin esto, un decimal que no cabe en NUMERIC haría fallar la carga.
+                          decimalTargetTypes: [NUMERIC, BIGNUMERIC]
+                          destinationTable:
+                            projectId: ${proyecto}
+                            datasetId: ${dataset}
+                            tableId: ${tabla}
+
+    - terminar:
+        return:
+          carpeta: ${"gs://" + bucket + "/" + run_prefix}
+          tablas_cargadas: ${manifiesto.selected_tables}
+
+# Predicado de reintento: cualquier error de la extracción se reintenta.
+reintentar_siempre:
+  params: [error]
+  steps:
+    - reintentar:
+        return: true
