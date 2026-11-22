@@ -24,9 +24,11 @@ locals {
   apis = [
     "artifactregistry.googleapis.com",
     "bigquery.googleapis.com",
+    "bigquerydatapolicy.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "cloudscheduler.googleapis.com",
     "compute.googleapis.com",
+    "datacatalog.googleapis.com",
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
     "iap.googleapis.com",
@@ -49,6 +51,8 @@ locals {
     "roles/compute.instanceAdmin.v1", # VM de OpenMetadata
     "roles/compute.networkAdmin",
     "roles/compute.securityAdmin", # reglas de firewall (networkAdmin no las incluye)
+    # Policy tag de los datos personales.
+    "roles/datacatalog.categoryAdmin",
     "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountUser",
     "roles/resourcemanager.projectIamAdmin",

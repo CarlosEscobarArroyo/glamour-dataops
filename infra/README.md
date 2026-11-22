@@ -16,6 +16,7 @@ infra/
 │   ├── secrets/          Los secretos MYSQL_HOST y MYSQL_PASSWORD (vacíos) y quién los lee.
 │   ├── storage/          Landing zone (Parquet) y bucket de Data Docs.
 │   ├── bigquery/         Datasets staging, validation y dimensional, con sus accesos.
+│   ├── gobierno/         Policy tag y enmascarado de los datos personales de las vendedoras.
 │   ├── orchestration/    Cloud Workflows y Cloud Scheduler (5:00 a. m., Lima).
 │   └── openmetadata/     VM para OpenMetadata con IP fija; interfaz pública, SSH por IAP.
 └── environments/
@@ -137,6 +138,28 @@ instale. El SSH solo entra por IAP.
 
 Los metadatos viven en el disco de la VM: si Terraform la recrea o la destruye,
 se pierden.
+
+## Datos personales
+
+El correo, los teléfonos, la contraseña, el DNI, el RUC y la dirección de
+`bq_staging.persona`, y el `celular` de `dim_vendedor`, llevan la policy tag
+`dato_personal`:
+
+| Quién | Qué ve |
+| --- | --- |
+| Dueños del proyecto (`roles/owner`) y `sa-workflows` | El valor real |
+| `sa-looker` y `sa-quality` | `NULL` |
+| El resto | La consulta falla si pide esas columnas |
+
+- Terraform lee quién es dueño al aplicar: si cambia, hay que volver a aplicar.
+- Para que un integrante vea `NULL` en vez de un error, se le da a mano
+  `roles/bigquerydatapolicy.maskedReader` en el proyecto.
+- La etiqueta la pone el workflow después de cada carga, porque reemplazar una
+  tabla la borra. Entre que termina la carga y se vuelve a poner pasan unos
+  segundos en que la columna queda sin proteger. La lista de columnas está en
+  `columnas_protegidas`, en `src/orchestration/workflow_comercial.yaml`.
+- `bootstrap/` le da a `sa-terraform` las dos APIs y el rol
+  `roles/datacatalog.categoryAdmin` que esto necesita.
 
 ## Protecciones
 
