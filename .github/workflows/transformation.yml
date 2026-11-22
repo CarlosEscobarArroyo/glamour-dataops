@@ -3,6 +3,7 @@ name: Transformación
 # Publica en BigQuery el modelo dimensional de src/transformation/:
 #   - Cada archivo .sql se guarda como un procedimiento almacenado
 #     (bq_validation.sp_<archivo>), que el workflow del pipeline ejecuta a diario.
+#   - Los archivos fn_*.sql son funciones compartidas por esos procedimientos.
 #   - ref_ubigeo.csv se carga como la tabla de referencia bq_staging.ref_ubigeo.
 # Pull request: pruebas, sin acceder a GCP. Push a dev o main: además publica
 # (dev -> proyecto dev; main -> prod, con aprobación).
@@ -57,10 +58,19 @@ jobs:
           bq load --project_id="$PROJECT_ID" --source_format=CSV --skip_leading_rows=1 --replace \
             bq_staging.ref_ubigeo src/transformation/ref_ubigeo.csv \
             id_ubigeo:STRING,distrito:STRING,provincia:STRING,departamento:STRING,ubigeo_inei:STRING,observacion:STRING
+      - name: Publicar las funciones
+        run: |
+          # Los archivos fn_*.sql definen funciones que usan los procedimientos:
+          # se publican primero y tal cual están escritos.
+          for archivo in src/transformation/fn_*.sql; do
+            echo "Publicando $(basename "$archivo")"
+            bq query --project_id="$PROJECT_ID" --use_legacy_sql=false --quiet < "$archivo"
+          done
       - name: Publicar los procedimientos
         run: |
           for archivo in src/transformation/*.sql; do
             tabla=$(basename "$archivo" .sql)
+            case "$tabla" in fn_*) continue ;; esac
             echo "Publicando bq_validation.sp_${tabla}"
             # strict_mode = FALSE: al crear el procedimiento no se exige que ya existan
             # las tablas que lee, porque algunas las crea otro procedimiento.

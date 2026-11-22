@@ -48,12 +48,21 @@ class RefUbigeoTests(unittest.TestCase):
 
 class SqlTests(unittest.TestCase):
     def test_each_file_builds_the_validation_table_named_after_it(self):
-        archivos = sorted(TRANSFORMACION.glob("*.sql"))
+        archivos = sorted(a for a in TRANSFORMACION.glob("*.sql") if not a.name.startswith("fn_"))
         self.assertTrue(archivos)
         for archivo in archivos:
             with self.subTest(archivo=archivo.name):
-                tablas = re.findall(r"CREATE OR REPLACE TABLE (\S+) AS", archivo.read_text(encoding="utf-8"))
+                sql = archivo.read_text(encoding="utf-8")
+                tablas = re.findall(r"CREATE OR REPLACE TABLE (\S+) AS", sql)
                 self.assertEqual(tablas, [f"bq_validation.{archivo.stem}"])
+                # Una función temporal choca si dos procedimientos corren en el mismo script.
+                self.assertNotIn("TEMP FUNCTION", sql)
+
+    def test_each_function_file_defines_the_function_named_after_it(self):
+        for archivo in sorted(TRANSFORMACION.glob("fn_*.sql")):
+            with self.subTest(archivo=archivo.name):
+                funciones = re.findall(r"CREATE OR REPLACE FUNCTION ([\w.]+)\(", archivo.read_text(encoding="utf-8"))
+                self.assertEqual(funciones, [f"bq_validation.{archivo.stem.removeprefix('fn_')}"])
 
 
 if __name__ == "__main__":

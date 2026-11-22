@@ -1,20 +1,10 @@
 -- Coordinadoras: las personas de nivel 5.
 
--- Convierte un texto 'AAAA-MM-DD' en fecha. Devuelve NULL si no es una fecha real
--- (como '0000-00-00') o si el año es absurdo (errores de digitación del origen).
-CREATE TEMP FUNCTION fecha_valida(texto STRING) AS (
-  IF(
-    SAFE_CAST(texto AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31',
-    SAFE_CAST(texto AS DATE),
-    NULL
-  )
-);
-
 CREATE OR REPLACE TABLE bq_validation.dim_coordinadora AS
 SELECT
   ccodpersona AS id_coordinadora,
   cnompersona AS nombre_coordinadora,
   cestpersona AS estado,
-  fecha_valida(dnacpersona) AS fecha_nacimiento
+  bq_validation.fecha_valida(dnacpersona) AS fecha_nacimiento
 FROM bq_staging.persona
 WHERE cnivpersona = '5';

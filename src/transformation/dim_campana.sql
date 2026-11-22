@@ -1,15 +1,5 @@
 -- Campañas comerciales. numero_campana las numera por fecha de inicio.
 
--- Convierte un texto 'AAAA-MM-DD' en fecha. Devuelve NULL si no es una fecha real
--- (como '0000-00-00') o si el año es absurdo (errores de digitación del origen).
-CREATE TEMP FUNCTION fecha_valida(texto STRING) AS (
-  IF(
-    SAFE_CAST(texto AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31',
-    SAFE_CAST(texto AS DATE),
-    NULL
-  )
-);
-
 CREATE OR REPLACE TABLE bq_validation.dim_campana AS
 WITH corregida AS (
   -- Fechas mal digitadas en el origen (años como 1019 o 9999), corregidas a mano.
@@ -37,8 +27,8 @@ con_fechas AS (
     ccodcampana AS id_campana,
     cnomcampana AS nombre_campana,
     cestcampana AS estado,
-    fecha_valida(dfecinicio) AS fecha_inicio,
-    fecha_valida(dfecfinal) AS fecha_fin
+    bq_validation.fecha_valida(dfecinicio) AS fecha_inicio,
+    bq_validation.fecha_valida(dfecfinal) AS fecha_fin
   FROM corregida
 )
 SELECT
