@@ -21,12 +21,12 @@ WITH pedido AS (
     ccodcliente AS id_vendedor,
     bq_validation.fecha_valida(dfecpedido) AS fecha_pedido,
     bq_validation.fecha_valida(dfecpago) AS fecha_pago,
-    -- Nombres que muestra el sistema en "Resumen de Campaña". Los estados 2, 3 y 6
+    -- Nombres que muestra el sistema en "Resumen de Campaña". Los estados 3 y 6
     -- no se han visto en esa pantalla: llevan el nombre del catálogo (webparametros).
     CASE cestpedido
       WHEN '0' THEN 'Borrador'
       WHEN '1' THEN 'Emitido'
-      WHEN '2' THEN 'Pago por verificar'
+      WHEN '2' THEN 'Pago reportado'
       WHEN '3' THEN 'Por Facturar'
       WHEN '4' THEN 'Facturado'
       WHEN '5' THEN 'Despachado'

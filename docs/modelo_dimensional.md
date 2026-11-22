@@ -58,7 +58,7 @@ catálogo y 61.479,55 de pago; y con `2026 C10 TENDENCIAS QUE INSPIR`: 208,
 | `id_fecha_pago` | INT64 | Fecha de pago → `dim_fecha`. Nulo si no se pagó. |
 | `id_coordinadora` | INT64 | Coordinadora **actual** de la asesora → `dim_coordinadora`. No guarda historia. |
 | `id_ubigeo` | STRING | Ubigeo de la asesora → `dim_ubicacion`. |
-| `estado_pedido` | STRING | Estado con el nombre que muestra el sistema: Borrador, Emitido, Pago por verificar, Por Facturar, Facturado, Despachado, Entregado. Los anulados no están en la tabla. |
+| `estado_pedido` | STRING | Estado con el nombre que muestra el sistema: Borrador, Emitido, Pago reportado, Por Facturar, Facturado, Despachado, Entregado. Los anulados no están en la tabla. |
 | `monto_total_pedido` | NUMERIC | Importe a precio de catálogo. Es el "Monto Catálogo" del sistema. |
 | `monto_comision` | NUMERIC | Comisión de la asesora. Es el "Monto Comisión" del sistema. |
 | `monto_envio` | NUMERIC | Costo de envío. Es el "Monto Envío" del sistema. |
