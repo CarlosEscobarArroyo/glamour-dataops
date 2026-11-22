@@ -16,7 +16,8 @@ infra/
 │   ├── secrets/          Los secretos MYSQL_HOST y MYSQL_PASSWORD (vacíos) y quién los lee.
 │   ├── storage/          Landing zone (Parquet) y bucket de Data Docs.
 │   ├── bigquery/         Datasets staging, validation y dimensional, con sus accesos.
-│   └── orchestration/    Cloud Workflows y Cloud Scheduler (5:00 a. m., Lima).
+│   ├── orchestration/    Cloud Workflows y Cloud Scheduler (5:00 a. m., Lima).
+│   └── openmetadata/     VM para OpenMetadata con IP fija; interfaz pública, SSH por IAP.
 └── environments/
     ├── dev/              glamour-dataops-dev  (rama dev)
     └── prod/             glamour-dataops-prod (rama main)
@@ -123,6 +124,19 @@ Se dispara con cambios en `infra/`.
   su contenido. La definición real, `src/orchestration/workflow_comercial.yaml`, la
   publica [`orchestration.yml`](../.github/workflows/orchestration.yml).
   El flujo recibe por `sys.get_env` los nombres de los Jobs, del bucket y de los datasets.
+
+## OpenMetadata
+
+Se crea solo donde `openmetadata = true` en `terraform.tfvars` (hoy, dev).
+Terraform solo crea la VM con una IP fija; Docker y OpenMetadata se instalan a
+mano, entrando con el comando del output `openmetadata_ssh`.
+
+La interfaz queda en la dirección del output `openmetadata_url`, abierta a todo
+internet por HTTP: hay que cambiar la contraseña del usuario `admin` apenas se
+instale. El SSH solo entra por IAP.
+
+Los metadatos viven en el disco de la VM: si Terraform la recrea o la destruye,
+se pierden.
 
 ## Protecciones
 

@@ -29,6 +29,7 @@ locals {
     "compute.googleapis.com",
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
+    "iap.googleapis.com",
     "logging.googleapis.com",
     "monitoring.googleapis.com",
     "run.googleapis.com",
@@ -45,7 +46,9 @@ locals {
     "roles/artifactregistry.admin",
     "roles/bigquery.admin",
     "roles/cloudscheduler.admin",
+    "roles/compute.instanceAdmin.v1", # VM de OpenMetadata
     "roles/compute.networkAdmin",
+    "roles/compute.securityAdmin", # reglas de firewall (networkAdmin no las incluye)
     "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountUser",
     "roles/resourcemanager.projectIamAdmin",

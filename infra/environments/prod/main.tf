@@ -89,3 +89,15 @@ module "orchestration" {
     DATASET_DIMENSION  = module.bigquery.dimensional_dataset
   }
 }
+
+# Catálogo de datos. Solo existe donde openmetadata = true (ver terraform.tfvars).
+module "openmetadata" {
+  count      = var.openmetadata ? 1 : 0
+  source     = "../../modules/openmetadata"
+  prefijo    = local.prefijo
+  ambiente   = module.iam.ambiente
+  region     = var.region
+  zona       = "${var.region}-b"
+  network_id = module.vpc.network_id
+  subnet_id  = module.vpc.subnet_id
+}
