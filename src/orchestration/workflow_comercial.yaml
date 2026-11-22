@@ -10,6 +10,10 @@
 #   4. Valida el modelo con el Job de calidad (Great Expectations). Si alguna
 #      regla crítica falla, el workflow se detiene y no publica nada.
 #   5. Publica el modelo en el dataset dimensional, que es el que lee Looker Studio.
+#
+# Los datos personales de las vendedoras llevan una policy tag. Cargar, reconstruir
+# o copiar una tabla borra sus etiquetas, así que los pasos 2, 3 y 5 las vuelven
+# a poner apenas terminan (ver proteger_columnas).
 main:
   params: [args]
   steps:
@@ -38,6 +42,23 @@ main:
               - fact_movimientos_stock
           - job: ${sys.get_env("JOB_EXTRACCION")}
           - job_calidad: ${sys.get_env("JOB_CALIDAD")}
+          - policy_tag: ${sys.get_env("POLICY_TAG_DATO_PERSONAL")}
+          # Columnas con datos personales, por tabla. Al agregar una tabla o una
+          # columna con estos datos, hay que anotarla aquí.
+          - columnas_protegidas:
+              persona:
+                - cemapersona  # correo
+                - nmovil       # teléfonos
+                - nmovil2
+                - ntelefono
+                - ntelefono2
+                - cpaspersona  # contraseña
+                - cdnipersona  # documentos
+                - crucpersona
+                - cdireccion   # dirección
+                - creferencia
+              dim_vendedor:
+                - celular
 
     # Si la extracción falla se reintenta una vez. Cada intento escribe en una
     # carpeta nueva, porque el extractor nunca sobrescribe archivos.
@@ -117,6 +138,18 @@ main:
                   args:
                     trabajo: ${trabajo_carga}
                     descripcion: ${"la carga de " + tabla}
+              - proteger_staging:
+                  switch:
+                    - condition: ${tabla in columnas_protegidas}
+                      steps:
+                        - proteger_staging_tabla:
+                            call: proteger_columnas
+                            args:
+                              proyecto: ${proyecto}
+                              dataset: ${dataset}
+                              tabla: ${tabla}
+                              columnas: ${columnas_protegidas[tabla]}
+                              policy_tag: ${policy_tag}
 
     # Ejecuta los procedimientos uno por uno, en orden. Cada uno reconstruye su
     # tabla en validation a partir de staging.
@@ -140,6 +173,18 @@ main:
                 args:
                   trabajo: ${trabajo_procedimiento}
                   descripcion: ${"el procedimiento sp_" + tabla}
+            - proteger_validation:
+                switch:
+                  - condition: ${tabla in columnas_protegidas}
+                    steps:
+                      - proteger_validation_tabla:
+                          call: proteger_columnas
+                          args:
+                            proyecto: ${proyecto}
+                            dataset: ${dataset_validation}
+                            tabla: ${tabla}
+                            columnas: ${columnas_protegidas[tabla]}
+                            policy_tag: ${policy_tag}
 
     # Valida el modelo recién construido en validation. Si una regla crítica falla,
     # el Job termina con error, este paso lanza una excepción y no se publica
@@ -191,6 +236,18 @@ main:
                   args:
                     trabajo: ${trabajo_copia}
                     descripcion: ${"la publicación de " + tabla}
+              - proteger_dimensional:
+                  switch:
+                    - condition: ${tabla in columnas_protegidas}
+                      steps:
+                        - proteger_dimensional_tabla:
+                            call: proteger_columnas
+                            args:
+                              proyecto: ${proyecto}
+                              dataset: ${dataset_dimensional}
+                              tabla: ${tabla}
+                              columnas: ${columnas_protegidas[tabla]}
+                              policy_tag: ${policy_tag}
 
     - terminar:
         return:
@@ -215,3 +272,54 @@ verificar_trabajo:
         switch:
           - condition: ${"errorResult" in trabajo.status}
             raise: '${"Falló " + descripcion + ": " + trabajo.status.errorResult.message}'
+
+# Pone la policy tag en las columnas indicadas de una tabla. La API pide enviar
+# el esquema completo, así que se lee, se marca cada columna y se guarda. Falla
+# si alguna de las columnas no existe.
+proteger_columnas:
+  params: [proyecto, dataset, tabla, columnas, policy_tag]
+  steps:
+    - leer_tabla:
+        call: googleapis.bigquery.v2.tables.get
+        args:
+          projectId: ${proyecto}
+          datasetId: ${dataset}
+          tableId: ${tabla}
+        result: definicion
+    - iniciar:
+        assign:
+          - campos: []
+          - marcadas: 0
+    - recorrer_columnas:
+        for:
+          value: campo
+          in: ${definicion.schema.fields}
+          steps:
+            - copiar_campo:
+                assign:
+                  - nuevo: ${campo}
+            - marcar:
+                switch:
+                  - condition: ${campo.name in columnas}
+                    assign:
+                      - nuevo.policyTags:
+                          names:
+                            - ${policy_tag}
+                      - marcadas: ${marcadas + 1}
+            - agregar:
+                assign:
+                  - campos: ${list.concat(campos, nuevo)}
+    # Si una columna cambió de nombre, quedaría sin proteger sin que nadie lo note.
+    - revisar_columnas:
+        switch:
+          - condition: ${marcadas != len(columnas)}
+            raise: '${"Faltan columnas por proteger en " + dataset + "." + tabla}'
+    - guardar:
+        call: googleapis.bigquery.v2.tables.patch
+        args:
+          projectId: ${proyecto}
+          datasetId: ${dataset}
+          tableId: ${tabla}
+          body:
+            schema:
+              fields: ${campos}
