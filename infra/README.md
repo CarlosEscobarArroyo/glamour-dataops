@@ -33,7 +33,7 @@ y `backend.tf`.
 | | Leer el valor | Secretos `MYSQL_HOST` y `MYSQL_PASSWORD` |
 | `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Datasets `bq_staging` y `bq_validation` |
 | | Escribir Data Docs | Bucket de Data Docs |
-| `sa-workflows-<ambiente>` | Ejecutar los Jobs | Proyecto (los Jobs los crea el CI) |
+| `sa-workflows-<ambiente>` | Ejecutar los Jobs y consultar su estado | Proyecto (los Jobs los crea el CI) |
 | | Leer Parquet | Bucket landing |
 | | Editar tablas y ejecutar consultas | Datasets `bq_staging`, `bq_validation` y `bq_dimensional` |
 | `sa-scheduler-<ambiente>` | Iniciar ejecuciones del workflow | Proyecto |

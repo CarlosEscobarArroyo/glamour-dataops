@@ -22,10 +22,12 @@ locals {
     "scheduler-invoker" = { cuenta = "scheduler", rol = "roles/workflows.invoker" }
     "looker-jobuser"    = { cuenta = "looker", rol = "roles/bigquery.jobUser" }
     # A nivel de proyecto porque los Jobs los crea el CI, no Terraform.
-    "workflows-jobs"   = { cuenta = "workflows", rol = "roles/run.jobsExecutorWithOverrides" }
-    "deploy-run"       = { cuenta = "deploy", rol = "roles/run.developer" }
-    "deploy-workflows" = { cuenta = "deploy", rol = "roles/workflows.editor" }
-    "deploy-bigquery"  = { cuenta = "deploy", rol = "roles/bigquery.jobUser" }
+    "workflows-jobs" = { cuenta = "workflows", rol = "roles/run.jobsExecutorWithOverrides" }
+    # Para que el workflow pueda consultar si la ejecución del Job ya terminó.
+    "workflows-run-viewer" = { cuenta = "workflows", rol = "roles/run.viewer" }
+    "deploy-run"           = { cuenta = "deploy", rol = "roles/run.developer" }
+    "deploy-workflows"     = { cuenta = "deploy", rol = "roles/workflows.editor" }
+    "deploy-bigquery"      = { cuenta = "deploy", rol = "roles/bigquery.jobUser" }
   }
 
   # Roles del equipo definidos en el README (sección 7): ver y operar, no administrar datos.
