@@ -48,6 +48,45 @@ module "bigquery" {
   dimensional_lectores = { looker = module.iam.members.looker }
 }
 
+# Datos personales de las vendedoras: solo los dueños del proyecto (roles/owner)
+# ven el valor real. Si cambia quién es dueño, hay que volver a aplicar.
+data "google_project_iam_policy" "actual" {
+  project = var.project_id
+}
+
+locals {
+  duenos = toset(flatten([
+    for b in jsondecode(data.google_project_iam_policy.actual.policy_data).bindings :
+    [for m in b.members : m if startswith(m, "user:") || startswith(m, "group:")]
+    if b.role == "roles/owner"
+  ]))
+}
+
+module "gobierno" {
+  source   = "../../modules/gobierno"
+  prefijo  = local.prefijo
+  location = lower(var.bq_location)
+
+  # sa-workflows lee el valor real para construir y publicar dim_vendedor.
+  lectores_reales = merge(
+    { for m in local.duenos : m => m },
+    { workflows = module.iam.members.workflows },
+  )
+
+  lectores_enmascarados = {
+    looker  = module.iam.members.looker
+    calidad = module.iam.members.quality
+  }
+
+  etiquetadores = { workflows = module.iam.members.workflows }
+
+  datasets = [
+    module.bigquery.staging_dataset,
+    module.bigquery.validation_dataset,
+    module.bigquery.dimensional_dataset,
+  ]
+}
+
 # Convención de docs/artifact_registry.md: un repositorio por proyecto, una imagen por
 # componente (extraction, quality) y etiquetas inmutables. Sin borrado automático.
 resource "google_artifact_registry_repository" "imagenes" {
@@ -87,6 +126,8 @@ module "orchestration" {
     DATASET_STAGING    = module.bigquery.staging_dataset
     DATASET_VALIDATION = module.bigquery.validation_dataset
     DATASET_DIMENSION  = module.bigquery.dimensional_dataset
+    # Etiqueta que el workflow pone en las columnas con datos personales.
+    POLICY_TAG_DATO_PERSONAL = module.gobierno.policy_tag
   }
 }
 
