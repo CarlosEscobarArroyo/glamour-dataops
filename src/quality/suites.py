@@ -2,10 +2,18 @@
 
 Todas las tablas reciben controles estructurales. El piloto agrega controles de
 negocio a dim_fecha, dim_campana, dim_ubicacion, dim_vendedor y fact_pedidos.
+
+Cada expectativa es crítica (detiene la publicación) salvo las marcadas con
+severity="warning": esas solo se reportan en Data Docs y en el log. Son
+advertencias los defectos conocidos del origen que el negocio aún no corrige.
 """
 
 from dataclasses import dataclass
 from typing import Callable
+
+
+WARNING = "warning"
+WARNING_PREFIX = "Advertencia: "
 
 
 @dataclass(frozen=True)
@@ -180,7 +188,13 @@ def _structural_expectations(gxe, contract: TableContract) -> list:
     return expectations
 
 
-def _unexpected_rows(gxe, query: str, description: str):
+def _unexpected_rows(gxe, query: str, description: str, warning: bool = False):
+    if warning:
+        return gxe.UnexpectedRowsExpectation(
+            unexpected_rows_query=query,
+            description=WARNING_PREFIX + description,
+            severity=WARNING,
+        )
     return gxe.UnexpectedRowsExpectation(
         unexpected_rows_query=query,
         description=description,
@@ -213,16 +227,37 @@ def _dim_campana(gxe, _qualified: Callable[[str], str]) -> list:
             "SELECT id_campana FROM {batch} "
             "WHERE fecha_inicio IS NOT NULL AND fecha_fin IS NOT NULL "
             "AND fecha_inicio > fecha_fin",
+            # Advertencia: una campaña del origen tiene las fechas invertidas
+            # (ejecución del 22/11/2026). Corresponde agregarla a las correcciones
+            # a mano de dim_campana.sql.
             "La fecha inicial de una campaña no puede ser posterior a su fecha final.",
+            warning=True,
         ),
     ]
 
 
 def _dim_ubicacion(gxe, _qualified: Callable[[str], str]) -> list:
+    # ref_ubigeo mezcla dos niveles. Los códigos que terminan en 0000 son un país
+    # (AF, BO, EC, PE000000) o un departamento (PE010000...), sin distrito ni
+    # provincia. El resto son distritos y deben estar completos.
     return [
-        gxe.ExpectColumnValuesToNotBeNull(column="distrito"),
-        gxe.ExpectColumnValuesToNotBeNull(column="provincia"),
-        gxe.ExpectColumnValuesToNotBeNull(column="departamento"),
+        _unexpected_rows(
+            gxe,
+            "SELECT id_ubigeo FROM {batch} "
+            "WHERE NOT ENDS_WITH(id_ubigeo, '0000') "
+            "AND (distrito IS NULL OR provincia IS NULL OR departamento IS NULL)",
+            "Todo código de distrito tiene distrito, provincia y departamento.",
+        ),
+        # Advertencia: PE030000 llega sin departamento en ref_ubigeo.csv
+        # (ejecución del 22/11/2026).
+        _unexpected_rows(
+            gxe,
+            "SELECT id_ubigeo FROM {batch} "
+            "WHERE STARTS_WITH(id_ubigeo, 'PE') AND ENDS_WITH(id_ubigeo, '0000') "
+            "AND id_ubigeo != 'PE000000' AND departamento IS NULL",
+            "Todo código de departamento del Perú tiene el nombre del departamento.",
+            warning=True,
+        ),
     ]
 
 
@@ -253,6 +288,8 @@ def _fact_pedidos(gxe, qualified: Callable[[str], str]) -> list:
     ]
     expectations.extend(
         [
+            # Advertencia: fact_pedidos.sql deja pasar el código de los estados
+            # que no traduce; hubo 8 pedidos así en la ejecución del 22/11/2026.
             gxe.ExpectColumnValuesToBeInSet(
                 column="estado_pedido",
                 value_set=[
@@ -264,6 +301,9 @@ def _fact_pedidos(gxe, qualified: Callable[[str], str]) -> list:
                     "Despachado",
                     "Entregado",
                 ],
+                description=WARNING_PREFIX
+                + "El estado del pedido tiene un nombre conocido del sistema.",
+                severity=WARNING,
             ),
             gxe.ExpectColumnValuesToBeInSet(
                 column="es_nueva_vendedora", value_set=[0, 1]
@@ -285,7 +325,10 @@ def _fact_pedidos(gxe, qualified: Callable[[str], str]) -> list:
                 f"LEFT JOIN {qualified('dim_vendedor')} AS d "
                 "ON d.id_vendedor = p.id_vendedor "
                 "WHERE d.id_vendedor IS NULL",
+                # Advertencia: dim_vendedor solo trae asesoras y líderes, y hay
+                # pedidos de clientes que no existen en persona (71 el 22/11/2026).
                 "Cada pedido debe corresponder a una vendedora existente.",
+                warning=True,
             ),
             _unexpected_rows(
                 gxe,
@@ -318,7 +361,7 @@ PILOT_BUILDERS = {
 
 
 def build_expectations(gxe, table: str, project: str, dataset: str) -> list:
-    """Devuelve las expectativas bloqueantes de una tabla."""
+    """Devuelve las expectativas de una tabla, críticas y de advertencia."""
     contract = TABLE_CONTRACTS[table]
 
     def qualified(other_table: str) -> str:

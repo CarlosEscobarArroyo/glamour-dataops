@@ -1,8 +1,11 @@
 import os
+import sqlite3
 import sys
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 
@@ -42,15 +45,100 @@ class ConfigTests(unittest.TestCase):
         self.assertRegex(config.run_id, r"^manual-\d{8}T\d{6}Z$")
 
 
-class ResultTests(unittest.TestCase):
-    def test_result_status_accepts_objects_and_dictionaries(self):
-        success = MagicMock(success=True)
-        failure = MagicMock(success=False)
-        self.assertTrue(validate.result_succeeded(success))
-        self.assertFalse(validate.result_succeeded(failure))
-        self.assertTrue(validate.result_succeeded({"success": True}))
-        self.assertFalse(validate.result_succeeded({"success": False}))
+def expectation_result(success, severity="critical", description="regla", raised=False):
+    return SimpleNamespace(
+        success=success,
+        expectation_config=SimpleNamespace(
+            severity=severity, description=description, type="expect_x"
+        ),
+        exception_info={"raised_exception": raised},
+    )
 
+
+def checkpoint_result(*tables):
+    return SimpleNamespace(
+        run_results={
+            name: SimpleNamespace(asset_name=name, suite_name=f"{name}_suite", results=items)
+            for name, items in tables
+        }
+    )
+
+
+class EvaluateTests(unittest.TestCase):
+    def test_passes_when_every_expectation_passes(self):
+        success, tables = validate.evaluate(
+            checkpoint_result(("dim_x", [expectation_result(True)]))
+        )
+        self.assertTrue(success)
+        self.assertEqual(tables[0]["critical_failures"], [])
+
+    def test_a_failed_warning_does_not_block(self):
+        success, tables = validate.evaluate(
+            checkpoint_result(
+                ("dim_x", [expectation_result(False, "warning", "aviso"), expectation_result(True)])
+            )
+        )
+        self.assertTrue(success)
+        self.assertEqual(tables[0]["warnings"], ["aviso"])
+
+    def test_a_failed_critical_blocks(self):
+        success, tables = validate.evaluate(
+            checkpoint_result(
+                ("dim_x", [expectation_result(True)]),
+                ("fact_y", [expectation_result(False, "critical", "clave única")]),
+            )
+        )
+        self.assertFalse(success)
+        self.assertEqual(tables[1], {"table": "fact_y", "critical_failures": ["clave única"], "warnings": []})
+
+    def test_a_warning_that_could_not_run_blocks(self):
+        success, _ = validate.evaluate(
+            checkpoint_result(("dim_x", [expectation_result(False, "warning", raised=True)]))
+        )
+        self.assertFalse(success)
+
+    def test_nothing_validated_is_not_a_success(self):
+        self.assertFalse(validate.evaluate(checkpoint_result())[0])
+
+    def test_reads_a_real_great_expectations_result(self):
+        """El checkpoint de GX falla con solo advertencias; evaluate lo aprueba."""
+        import great_expectations as gx
+        import great_expectations.expectations as gxe
+
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "datos.db"
+            with closing(sqlite3.connect(database)) as conexion:
+                conexion.execute("CREATE TABLE dim_x (id INTEGER)")
+                conexion.execute("INSERT INTO dim_x VALUES (1), (1)")
+                conexion.commit()
+            context = gx.get_context(mode="ephemeral")
+            asset = context.data_sources.add_sqlite(
+                name="local", connection_string=f"sqlite:///{database}"
+            ).add_table_asset(name="dim_x", table_name="dim_x")
+            suite = context.suites.add(gx.ExpectationSuite(name="dim_x_suite"))
+            suite.add_expectation(gxe.ExpectColumnValuesToNotBeNull(column="id"))
+            suite.add_expectation(
+                gxe.ExpectColumnValuesToBeUnique(column="id", severity="warning")
+            )
+            definition = context.validation_definitions.add(
+                gx.ValidationDefinition(
+                    name="dim_x_validation",
+                    data=asset.add_batch_definition_whole_table(name="todo"),
+                    suite=suite,
+                )
+            )
+            result = context.checkpoints.add(
+                gx.Checkpoint(name="prueba", validation_definitions=[definition])
+            ).run()
+
+        self.assertFalse(result.success)
+        success, tables = validate.evaluate(result)
+        self.assertTrue(success)
+        self.assertEqual(tables[0]["table"], "dim_x")
+        self.assertEqual(tables[0]["warnings"], ["expect_column_values_to_be_unique"])
+
+
+class ResultTests(unittest.TestCase):
     def test_main_returns_zero_when_quality_passes(self):
         with (
             patch.dict(os.environ, VALID_ENV, clear=True),
@@ -79,10 +167,45 @@ class ResultTests(unittest.TestCase):
             )
 
 
+BASE = "https://storage.cloud.google.com/bucket/latest"
+
+
+class AbsoluteLinksTests(unittest.TestCase):
+    def test_index_links_point_inside_the_prefix(self):
+        html = (
+            '<a href="expectations/dim_x_suite.html">s</a>'
+            '<link href="./static/images/favicon.ico">'
+            "{'_table_row_link_path': 'validations/dim_x_suite/__none__/"
+            "20261122T174352.582536Z/bigquery_validation-dim_x.html'}"
+        )
+        result = validate.absolute_links(html, "index.html", BASE)
+        self.assertIn(f'href="{BASE}/expectations/dim_x_suite.html"', result)
+        self.assertIn(f'href="{BASE}/static/images/favicon.ico"', result)
+        self.assertIn(
+            f"'{BASE}/validations/dim_x_suite/__none__/"
+            "20261122T174352.582536Z/bigquery_validation-dim_x.html'",
+            result,
+        )
+
+    def test_parent_links_resolve_from_the_page_folder(self):
+        page = "validations/s/__none__/20261122T174352.582536Z/x.html"
+        result = validate.absolute_links('<a href="../../../../index.html">', page, BASE)
+        self.assertEqual(result, f'<a href="{BASE}/index.html">')
+
+    def test_external_and_anchor_links_are_untouched(self):
+        html = (
+            '<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>'
+            '<a href="#section-1">a</a><a href="mailto:x@y.z">m</a>'
+        )
+        self.assertEqual(validate.absolute_links(html, "index.html", BASE), html)
+
+
 class DataDocsUploadTests(unittest.TestCase):
     def test_uploads_each_file_to_run_and_latest(self):
         client = MagicMock()
         bucket = client.bucket.return_value
+        old_page = MagicMock()
+        client.list_blobs.return_value = [old_page]
         blobs = {}
 
         def blob(name):
@@ -98,7 +221,7 @@ class DataDocsUploadTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "index.html").write_text("index", encoding="utf-8")
+            (root / "index.html").write_text('<a href="static/site.css">', encoding="utf-8")
             (root / "static").mkdir()
             (root / "static" / "site.css").write_text("css", encoding="utf-8")
             uploaded = validate.upload_data_docs(root, config, client)
@@ -113,8 +236,20 @@ class DataDocsUploadTests(unittest.TestCase):
                 "latest/static/site.css",
             },
         )
-        for stored_blob in blobs.values():
-            stored_blob.upload_from_filename.assert_called_once()
+        # latest/ se vacía antes de subir la nueva ejecución.
+        client.list_blobs.assert_called_once_with(
+            "glamour-dataops-dev-cs-data-docs", prefix="latest/"
+        )
+        old_page.delete.assert_called_once()
+        # Las páginas se suben con enlaces completos a su propia carpeta.
+        blobs["latest/index.html"].upload_from_string.assert_called_once_with(
+            '<a href="https://storage.cloud.google.com/'
+            'glamour-dataops-dev-cs-data-docs/latest/static/site.css">',
+            content_type="text/html; charset=utf-8",
+        )
+        run_html = blobs["runs/test-run-123/index.html"].upload_from_string.call_args.args[0]
+        self.assertIn("/runs/test-run-123/static/site.css", run_html)
+        blobs["latest/static/site.css"].upload_from_filename.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 
 import json
 import os
+import posixpath
 import re
 import shutil
 import sys
@@ -14,6 +15,14 @@ from suites import TABLE_CONTRACTS, build_expectations
 
 
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_-]+$")
+
+# Ruta relativa entre comillas dentro de una página de Data Docs: atributos href y
+# src, y las rutas que index.html guarda en JavaScript para sus filas clicables.
+RELATIVE_LINK = re.compile(
+    r"""(?<=["'])(?!https?:|//|#|mailto:|data:|javascript:)"""
+    r"""((?:\.{1,2}/)*[\w.%-]+(?:/[\w.%-]+)*\.(?:html|ico|png|svg|css|js))"""
+    r"""(?=[#?"'\\])"""
+)
 
 
 @dataclass(frozen=True)
@@ -54,11 +63,69 @@ def load_config(environ=None) -> Config:
     return Config(project, dataset, bucket, run_id)
 
 
-def result_succeeded(result) -> bool:
-    success = getattr(result, "success", None)
-    if success is None and isinstance(result, dict):
-        success = result.get("success")
-    return bool(success)
+def _is_critical(expectation_config) -> bool:
+    severity = getattr(expectation_config, "severity", None)
+    severity = getattr(severity, "value", severity) or "critical"
+    return str(severity).lower() != "warning"
+
+
+def _raised_exception(item) -> bool:
+    info = getattr(item, "exception_info", None) or {}
+    if info.get("raised_exception"):
+        return True
+    return any(
+        isinstance(value, dict) and value.get("raised_exception")
+        for value in info.values()
+    )
+
+
+def evaluate(result) -> tuple[bool, list[dict]]:
+    """Decide si el modelo se puede publicar.
+
+    El checkpoint de GX falla aunque solo fallen advertencias, así que la decisión
+    se toma aquí: bloquea una expectativa crítica que falla, o cualquiera que no
+    se pudo ejecutar (por ejemplo, una consulta con error).
+    """
+    tables = []
+    for suite_result in result.run_results.values():
+        critical, warnings = [], []
+        for item in suite_result.results:
+            if item.success:
+                continue
+            config = item.expectation_config
+            name = config.description or config.type
+            if _is_critical(config) or _raised_exception(item):
+                critical.append(name)
+            else:
+                warnings.append(name)
+        tables.append(
+            {
+                "table": getattr(suite_result, "asset_name", None) or suite_result.suite_name,
+                "critical_failures": critical,
+                "warnings": warnings,
+            }
+        )
+    success = bool(tables) and not any(t["critical_failures"] for t in tables)
+    return success, tables
+
+
+def absolute_links(html: str, page: str, base_url: str) -> str:
+    """Convierte los enlaces relativos de una página en direcciones completas.
+
+    El bucket es privado y se abre con la URL autenticada de Cloud Storage, que
+    redirige a googleusercontent.com con la ruta codificada (latest%2Findex.html).
+    Ahí un enlace relativo pierde la carpeta y da Not Found; uno completo vuelve a
+    pasar por la autenticación.
+    """
+    folder = posixpath.dirname(page)
+
+    def replace(match):
+        target = posixpath.normpath(posixpath.join(folder, match.group(1)))
+        if target.startswith("../"):
+            return match.group(1)
+        return f"{base_url}/{target}"
+
+    return RELATIVE_LINK.sub(replace, html)
 
 
 def upload_data_docs(local_site: Path, config: Config, storage_client=None) -> int:
@@ -69,11 +136,23 @@ def upload_data_docs(local_site: Path, config: Config, storage_client=None) -> i
     client = storage_client
     bucket = client.bucket(config.data_docs_bucket)
     files = [path for path in local_site.rglob("*") if path.is_file()]
-    for path in files:
-        relative = path.relative_to(local_site).as_posix()
-        for prefix in (f"runs/{config.run_id}", "latest"):
+    for prefix in (f"runs/{config.run_id}", "latest"):
+        if prefix == "latest":
+            # latest/ refleja solo la última ejecución: sin páginas de las anteriores.
+            for old in client.list_blobs(config.data_docs_bucket, prefix="latest/"):
+                old.delete()
+        base_url = f"https://storage.cloud.google.com/{config.data_docs_bucket}/{prefix}"
+        for path in files:
+            relative = path.relative_to(local_site).as_posix()
             blob = bucket.blob(f"{prefix}/{relative}")
-            blob.upload_from_filename(str(path))
+            if path.suffix == ".html":
+                html = path.read_text(encoding="utf-8")
+                blob.upload_from_string(
+                    absolute_links(html, relative, base_url),
+                    content_type="text/html; charset=utf-8",
+                )
+            else:
+                blob.upload_from_filename(str(path))
     return len(files)
 
 
@@ -149,12 +228,20 @@ def run_quality(config: Config) -> bool:
         )
         result = checkpoint.run()
         uploaded = upload_data_docs(data_docs_dir, config)
-        success = result_succeeded(result)
+        success, tables = evaluate(result)
+        for table in tables:
+            log_event(
+                "quality_table",
+                run_id=config.run_id,
+                success=not table["critical_failures"],
+                **table,
+            )
         log_event(
             "quality_finished",
             success=success,
             run_id=config.run_id,
             tables=list(TABLE_CONTRACTS),
+            warnings=sum(len(table["warnings"]) for table in tables),
             data_docs_files=uploaded,
             data_docs_prefix=f"gs://{config.data_docs_bucket}/runs/{config.run_id}/",
         )

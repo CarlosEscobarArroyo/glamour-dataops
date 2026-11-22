@@ -102,6 +102,40 @@ class SuiteContractTests(unittest.TestCase):
             )
         )
 
+    def test_only_known_source_defects_are_warnings(self):
+        warnings = {}
+        for table in EXPECTED_TABLES:
+            for item in suites.build_expectations(
+                FakeExpectations(), table, "glamour-dataops-dev", "bq_validation"
+            ):
+                if item.get("severity") == suites.WARNING:
+                    self.assertTrue(item["description"].startswith(suites.WARNING_PREFIX))
+                    warnings.setdefault(table, []).append(item["type"])
+        self.assertEqual(
+            warnings,
+            {
+                "dim_campana": ["UnexpectedRowsExpectation"],
+                "dim_ubicacion": ["UnexpectedRowsExpectation"],
+                "fact_pedidos": ["ExpectColumnValuesToBeInSet", "UnexpectedRowsExpectation"],
+            },
+        )
+
+    def test_location_only_requires_names_for_district_codes(self):
+        expectations = suites.build_expectations(
+            FakeExpectations(), "dim_ubicacion", "glamour-dataops-dev", "bq_validation"
+        )
+        not_null = {
+            item["column"] for item in expectations if item["type"] == "ExpectColumnValuesToNotBeNull"
+        }
+        self.assertEqual(not_null, {"id_ubigeo"})
+        critical = [
+            item["unexpected_rows_query"]
+            for item in expectations
+            if item["type"] == "UnexpectedRowsExpectation" and "severity" not in item
+        ]
+        self.assertEqual(len(critical), 1)
+        self.assertIn("NOT ENDS_WITH(id_ubigeo, '0000')", critical[0])
+
     def test_pinned_gx_version_accepts_every_expectation(self):
         import great_expectations.expectations as gxe
 
