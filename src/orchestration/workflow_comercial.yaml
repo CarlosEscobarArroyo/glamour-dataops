@@ -1,5 +1,6 @@
-# Pipeline comercial diario. Lo dispara Cloud Scheduler y lo despliega Terraform
-# (infra/modules/orchestration), que también define las variables de sys.get_env.
+# Pipeline comercial diario. Lo dispara Cloud Scheduler y lo publica el CI
+# (.github/workflows/orchestration.yml). Las variables de sys.get_env las define
+# Terraform (infra/modules/orchestration).
 #
 # Pasos implementados:
 #   1. Ejecuta el Job de extracción: MariaDB -> Parquet en la landing.

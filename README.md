@@ -49,11 +49,12 @@ que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `main` publica su imagen
 despliega su Job. El workflow [Orquestación](./.github/workflows/orchestration.yml)
 publica la definición del flujo de Cloud Workflows cuando cambia `src/orchestration/`.
 Los componentes siguientes describen la estructura objetivo; las carpetas de
-calidad, transformación y gobierno aún no están implementadas.
+calidad y gobierno aún no están implementadas.
 
 * **`.github/workflows/`** — Pipelines CI/CD (GitHub Actions)
   * `jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
   * `orchestration.yml`: Valida y publica la definición del workflow de Cloud Workflows.
+  * `transformation.yml`: Publica el SQL de `src/transformation/` como procedimientos de BigQuery y carga `ref_ubigeo.csv`.
   * `terraform.yml`: Validación, plan y despliegue de la infraestructura en GCP (`dev` / `prod`).
 * **`infra/`** — Infraestructura como Código (Terraform)
   * `modules/`: Módulos reutilizables (`storage`, `bigquery`, `cloud_run`, `iam`, `vpc`).
@@ -62,10 +63,11 @@ calidad, transformación y gobierno aún no están implementadas.
 * **`src/`** — Código fuente del pipeline
   * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
   * `quality/`: Contenedor 2 — Cloud Run Job de calidad con Great Expectations, pendiente.
-  * `transformation/`: Consultas y modelado en BigQuery, pendiente.
+  * `transformation/`: Modelo dimensional en SQL. Un archivo por tabla (dimensiones y hechos) y `ref_ubigeo.csv`, la tabla de referencia de ubicaciones.
   * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows; hoy ejecuta la extracción y la carga a Staging.
 * **`tests/`** — Pruebas, con la misma estructura que `src/`
   * `extraction/`: Pruebas unitarias del extractor.
+  * `transformation/`: Pruebas de los archivos SQL y de `ref_ubigeo.csv`, sin acceder a BigQuery.
 * **`governance/`** — Documentación base y configuración de OpenMetadata
   * `data_dictionary.md`: Diccionario de datos de tablas y columnas.
   * `metrics_glossary.md`: Definición oficial de indicadores comerciales (ej. Ventas).
@@ -136,6 +138,7 @@ valor. El código de los componentes solo lee variables de entorno.
 ### Quién es dueño de qué
 
 * **Terraform:** la plataforma. Proyecto, red, cuentas de servicio y permisos, buckets, datasets, secretos vacíos, Artifact Registry, y el workflow (su cuenta y sus variables, no su contenido) y el scheduler.
+* **CI de transformación:** el modelo dimensional. Guarda cada `.sql` de `src/transformation/` como procedimiento almacenado en `bq_validation` y carga `ref_ubigeo.csv` en `bq_staging`.
 * **CI de orquestación:** el contenido del workflow. Publica `src/orchestration/workflow_comercial.yaml` con `gcloud workflows deploy` cuando cambia.
 * **CI de los Jobs:** cada Cloud Run Job completo. Un único workflow detecta qué componente de `src/` cambió y, para ese componente, ejecuta las pruebas, construye y publica la imagen, rellena los marcadores de `job.yaml` y lo aplica con `gcloud run jobs replace`. Falla si queda un marcador sin resolver.
 * **Ramas:** `dev` despliega al proyecto dev; `main` despliega a prod con aprobación.
@@ -177,6 +180,8 @@ a partir del proyecto.
 | Memoria, timeout, una variable distinta por ambiente | `job.yaml` |
 | Contraseña u otro secreto | Secret Manager, sin desplegar |
 | Pasos del pipeline | `src/orchestration/workflow_comercial.yaml` |
+| Lógica de una dimensión o tabla de hechos | Su archivo en `src/transformation/` |
+| Ubicación de un distrito | `src/transformation/ref_ubigeo.csv` |
 | Recurso o permiso nuevo, política del ambiente | Terraform |
 
 ### Pendiente de decidir
