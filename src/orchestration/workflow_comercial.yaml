@@ -63,17 +63,15 @@ main:
                   connector_params:
                     timeout: 3900  # algo más que el timeout del Job (3600 s)
             # El manifiesto solo existe si se extrajeron todas las tablas; si
-            # falta, este paso falla y la extracción se reintenta.
+            # falta, este paso falla y la extracción se reintenta. Como es un
+            # archivo JSON, el conector lo devuelve ya interpretado.
             - leer_manifiesto:
                 call: googleapis.storage.v1.objects.get
                 args:
                   bucket: ${bucket}
                   object: ${text.url_encode(run_prefix + "/manifest.json")}
                   alt: media
-                result: contenido_manifiesto
-            - interpretar_manifiesto:
-                assign:
-                  - manifiesto: ${json.decode(text.decode(contenido_manifiesto))}
+                result: manifiesto
         retry:
           predicate: ${reintentar_siempre}
           max_retries: 1
