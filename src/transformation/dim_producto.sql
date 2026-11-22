@@ -72,6 +72,8 @@ producto AS (
   -- original, tal como está escrito en el sistema, sin espacios sobrantes.
   SELECT
     ccodcontenido AS id_producto,
+    -- Código corto con el que el negocio identifica el producto (por ejemplo 25235).
+    NULLIF(TRIM(ccodinterno), '') AS codigo_producto,
     TRIM(cnomcontenido) AS nombre_producto,
     LOWER(TRIM(IFNULL(cnomcontenido, ''))) AS nombre
   FROM bq_staging.contenido
@@ -79,6 +81,7 @@ producto AS (
 por_nombre AS (
   SELECT
     id_producto,
+    codigo_producto,
     nombre_producto,
     CASE
       WHEN REGEXP_CONTAINS(nombre, r'blusa|vestido|saco|pantalon|pantalón|camiseta|básico|tshirt|sueter|sweater|batola|camisilla|chaleco|chaqueta|chompa|chompero|chompera|chauqueta|conjunto|enterizo|polo|camisa|top|leggin|short|capri|kimono|cardigan|abrigo|pijama|capa|casaca|botines|sandalias|sandalia|zapatillas|zapatos|zapato|sniker|falda|faldon|jean|pantalaon|bikini|baby doll|brasier|panty|mandil|polera|ballerinas|botin|pantufla|camison|blazer|bata') THEN 'Ropa'
@@ -155,6 +158,7 @@ por_nombre AS (
 )
 SELECT
   por_nombre.id_producto,
+  por_nombre.codigo_producto,
   por_nombre.nombre_producto,
   IFNULL(por_seccion.categoria, por_nombre.categoria) AS categoria,
   IFNULL(por_seccion.subcategoria, por_nombre.subcategoria) AS subcategoria,
