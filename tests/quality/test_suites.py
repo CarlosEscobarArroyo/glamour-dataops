@@ -49,7 +49,7 @@ class SuiteContractTests(unittest.TestCase):
         }
         self.assertEqual(set(suites.TABLE_CONTRACTS), workflow_tables)
 
-    def test_exactly_the_five_pilot_tables_have_deep_rules(self):
+    def test_pilot_and_its_extension_have_deep_rules(self):
         self.assertEqual(
             suites.PILOT_TABLES,
             {
@@ -58,6 +58,8 @@ class SuiteContractTests(unittest.TestCase):
                 "dim_ubicacion",
                 "dim_vendedor",
                 "fact_pedidos",
+                "dim_producto",
+                "fact_pedidos_detalle",
             },
         )
         self.assertEqual(set(suites.PILOT_BUILDERS), set(suites.PILOT_TABLES))
@@ -117,8 +119,36 @@ class SuiteContractTests(unittest.TestCase):
                 "dim_campana": ["UnexpectedRowsExpectation"],
                 "dim_ubicacion": ["UnexpectedRowsExpectation"],
                 "fact_pedidos": ["ExpectColumnValuesToBeInSet", "UnexpectedRowsExpectation"],
+                "fact_pedidos_detalle": ["UnexpectedRowsExpectation"],
             },
         )
+
+    def test_orders_cover_referential_integrity_and_ranges(self):
+        queries = [
+            item["unexpected_rows_query"]
+            for item in suites.build_expectations(
+                FakeExpectations(), "fact_pedidos", "glamour-dataops-dev", "bq_validation"
+            )
+            if item["type"] == "UnexpectedRowsExpectation" and "severity" not in item
+        ]
+        text = "\n".join(queries)
+        for dimension in ("dim_campana", "dim_fecha", "dim_ubicacion", "dim_coordinadora"):
+            with self.subTest(dimension=dimension):
+                self.assertIn(f"`glamour-dataops-dev.bq_validation.{dimension}`", text)
+        self.assertIn("monto_total_pedido < 0", text)
+        self.assertIn("monto_total_pedido - monto_comision + monto_envio", text)
+        self.assertIn("CURRENT_DATE('America/Lima')", text)
+
+    def test_detail_lines_must_belong_to_an_order(self):
+        critical = [
+            item["unexpected_rows_query"]
+            for item in suites.build_expectations(
+                FakeExpectations(), "fact_pedidos_detalle", "glamour-dataops-dev", "bq_validation"
+            )
+            if item["type"] == "UnexpectedRowsExpectation" and "severity" not in item
+        ]
+        self.assertEqual(len(critical), 1)
+        self.assertIn("`glamour-dataops-dev.bq_validation.fact_pedidos`", critical[0])
 
     def test_location_only_requires_names_for_district_codes(self):
         expectations = suites.build_expectations(

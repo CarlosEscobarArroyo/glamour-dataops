@@ -33,8 +33,22 @@ class Config:
     run_id: str
 
 
-def log_event(event: str, **fields) -> None:
-    print(json.dumps({"event": event, **fields}, ensure_ascii=False, default=str))
+def log_event(event: str, severity: str = "INFO", **fields) -> None:
+    # Cloud Logging toma "severity" de la línea JSON: un rechazo queda como ERROR y
+    # Observabilidad puede filtrarlo sin interpretar el resto del mensaje.
+    print(
+        json.dumps(
+            {"severity": severity, "event": event, **fields},
+            ensure_ascii=False,
+            default=str,
+        )
+    )
+
+
+def _severity(critical_failures: int, warnings: int) -> str:
+    if critical_failures:
+        return "ERROR"
+    return "WARNING" if warnings else "INFO"
 
 
 def load_config(environ=None) -> Config:
@@ -232,16 +246,19 @@ def run_quality(config: Config) -> bool:
         for table in tables:
             log_event(
                 "quality_table",
+                _severity(len(table["critical_failures"]), len(table["warnings"])),
                 run_id=config.run_id,
                 success=not table["critical_failures"],
                 **table,
             )
+        warnings = sum(len(table["warnings"]) for table in tables)
         log_event(
             "quality_finished",
+            _severity(0 if success else 1, warnings),
             success=success,
             run_id=config.run_id,
             tables=list(TABLE_CONTRACTS),
-            warnings=sum(len(table["warnings"]) for table in tables),
+            warnings=warnings,
             data_docs_files=uploaded,
             data_docs_prefix=f"gs://{config.data_docs_bucket}/runs/{config.run_id}/",
         )
@@ -262,7 +279,12 @@ def main() -> int:
         )
         return 0 if run_quality(config) else 1
     except Exception as error:
-        log_event("quality_error", error_type=type(error).__name__, message=str(error))
+        log_event(
+            "quality_error",
+            "ERROR",
+            error_type=type(error).__name__,
+            message=str(error),
+        )
         return 1
 
 

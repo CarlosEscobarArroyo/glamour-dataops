@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 import sys
@@ -163,8 +164,26 @@ class ResultTests(unittest.TestCase):
         ):
             self.assertEqual(validate.main(), 1)
             log.assert_any_call(
-                "quality_error", error_type="RuntimeError", message="boom"
+                "quality_error", "ERROR", error_type="RuntimeError", message="boom"
             )
+
+
+class LogSeverityTests(unittest.TestCase):
+    def test_each_line_carries_severity_for_cloud_logging(self):
+        with patch("builtins.print") as printed:
+            validate.log_event("quality_finished", "ERROR", success=False)
+        line = json.loads(printed.call_args.args[0])
+        self.assertEqual(line, {"severity": "ERROR", "event": "quality_finished", "success": False})
+
+    def test_default_severity_is_info(self):
+        with patch("builtins.print") as printed:
+            validate.log_event("quality_started", run_id="r")
+        self.assertEqual(json.loads(printed.call_args.args[0])["severity"], "INFO")
+
+    def test_severity_reflects_the_worst_failure(self):
+        self.assertEqual(validate._severity(1, 3), "ERROR")
+        self.assertEqual(validate._severity(0, 2), "WARNING")
+        self.assertEqual(validate._severity(0, 0), "INFO")
 
 
 BASE = "https://storage.cloud.google.com/bucket/latest"

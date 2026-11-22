@@ -1,7 +1,8 @@
 """Contratos de calidad del modelo dimensional.
 
 Todas las tablas reciben controles estructurales. El piloto agrega controles de
-negocio a dim_fecha, dim_campana, dim_ubicacion, dim_vendedor y fact_pedidos.
+negocio a dim_fecha, dim_campana, dim_ubicacion, dim_vendedor y fact_pedidos, y
+su extensión a dim_producto y fact_pedidos_detalle (pilot=True en el contrato).
 
 Cada expectativa es crítica (detiene la publicación) salvo las marcadas con
 severity="warning": esas solo se reportan en Data Docs y en el log. Son
@@ -52,6 +53,7 @@ TABLE_CONTRACTS: dict[str, TableContract] = {
             "fuente_categoria",
         ),
         ("id_producto",),
+        pilot=True,
     ),
     "dim_variante": TableContract(
         ("id_variante", "id_producto", "nombre_producto", "color", "talla"),
@@ -115,6 +117,7 @@ TABLE_CONTRACTS: dict[str, TableContract] = {
             "importe_producto",
         ),
         ("id_pedido", "id_pedido_detalle"),
+        pilot=True,
     ),
     "fact_stock_actual": TableContract(
         (
@@ -346,9 +349,84 @@ def _fact_pedidos(gxe, qualified: Callable[[str], str]) -> list:
                 "WHERE p.id_fecha_pago IS NOT NULL AND d.id_fecha IS NULL",
                 "Toda fecha de pago informada debe existir en la dimensión calendario.",
             ),
+            # id_ubigeo e id_coordinadora pueden venir vacíos (la vendedora no los
+            # tiene); cuando traen un valor, debe existir en su dimensión.
+            _unexpected_rows(
+                gxe,
+                "SELECT p.id_pedido FROM {batch} AS p "
+                f"LEFT JOIN {qualified('dim_ubicacion')} AS d "
+                "ON d.id_ubigeo = p.id_ubigeo "
+                "WHERE p.id_ubigeo IS NOT NULL AND d.id_ubigeo IS NULL",
+                "Toda ubicación informada en un pedido debe existir en dim_ubicacion.",
+            ),
+            _unexpected_rows(
+                gxe,
+                "SELECT p.id_pedido FROM {batch} AS p "
+                f"LEFT JOIN {qualified('dim_coordinadora')} AS d "
+                "ON d.id_coordinadora = p.id_coordinadora "
+                "WHERE p.id_coordinadora IS NOT NULL AND d.id_coordinadora IS NULL",
+                "Toda coordinadora informada en un pedido debe existir en dim_coordinadora.",
+            ),
+            # Rangos de los montos.
+            _unexpected_rows(
+                gxe,
+                "SELECT id_pedido FROM {batch} "
+                "WHERE monto_total_pedido < 0 OR monto_comision < 0 "
+                "OR monto_envio < 0 OR monto_pagado < 0",
+                "Los montos de un pedido no son negativos.",
+            ),
+            # Tolerancia de un céntimo por redondeo.
+            _unexpected_rows(
+                gxe,
+                "SELECT id_pedido FROM {batch} "
+                "WHERE ABS(monto_pagado - (monto_total_pedido - monto_comision + monto_envio)) > 0.01",
+                "El monto a pagar es el de catálogo menos la comisión más el envío.",
+            ),
+            _unexpected_rows(
+                gxe,
+                "SELECT p.id_pedido FROM {batch} AS p "
+                f"JOIN {qualified('dim_fecha')} AS d ON d.id_fecha = p.id_fecha "
+                "WHERE d.fecha > CURRENT_DATE('America/Lima')",
+                "Ningún pedido tiene fecha futura.",
+            ),
         ]
     )
     return expectations
+
+
+# Extensión del piloto: el detalle de pedidos y la dimensión producto.
+def _dim_producto(gxe, _qualified: Callable[[str], str]) -> list:
+    return [
+        gxe.ExpectColumnValuesToNotBeNull(column="categoria"),
+        gxe.ExpectColumnValuesToBeInSet(
+            column="fuente_categoria",
+            value_set=["Sección del catálogo", "Nombre del producto", "Sin clasificar"],
+        ),
+    ]
+
+
+def _fact_pedidos_detalle(gxe, qualified: Callable[[str], str]) -> list:
+    return [
+        _unexpected_rows(
+            gxe,
+            "SELECT d.id_pedido_detalle FROM {batch} AS d "
+            f"LEFT JOIN {qualified('fact_pedidos')} AS p "
+            "ON p.id_pedido = d.id_pedido "
+            "WHERE p.id_pedido IS NULL",
+            "Cada línea de detalle pertenece a un pedido de fact_pedidos.",
+        ),
+        # Advertencia: el 10% del detalle apunta a productos que ya no están en
+        # el catálogo, casi todos antiguos (modelo_dimensional.md).
+        _unexpected_rows(
+            gxe,
+            "SELECT d.id_pedido_detalle FROM {batch} AS d "
+            f"LEFT JOIN {qualified('dim_producto')} AS p "
+            "ON p.id_producto = d.id_producto "
+            "WHERE p.id_producto IS NULL",
+            "Cada línea de detalle corresponde a un producto del catálogo.",
+            warning=True,
+        ),
+    ]
 
 
 PILOT_BUILDERS = {
@@ -357,6 +435,8 @@ PILOT_BUILDERS = {
     "dim_ubicacion": _dim_ubicacion,
     "dim_vendedor": _dim_vendedor,
     "fact_pedidos": _fact_pedidos,
+    "dim_producto": _dim_producto,
+    "fact_pedidos_detalle": _fact_pedidos_detalle,
 }
 
 

@@ -16,9 +16,23 @@ para `dim_fecha`, `dim_campana`, `dim_ubicacion`, `dim_vendedor` y
 `fact_pedidos`. `dim_fecha` completa el piloto descrito en el informe porque es
 una dependencia directa de las fechas del hecho de pedidos.
 
+Reglas de negocio de `fact_pedidos`, por tipo de control:
+
+| Control | Reglas |
+| --- | --- |
+| Completitud | Campaña, vendedora, fecha, estado, montos, `es_nueva_vendedora` y `tipo` no nulos |
+| Integridad referencial | Campaña, vendedora, fecha del pedido, fecha de pago, ubicación y coordinadora existen en su dimensión (las tres últimas solo cuando traen valor) |
+| Rangos | Montos no negativos; `monto_pagado = monto_total_pedido − monto_comision + monto_envio` (tolerancia de 0,01); ninguna fecha de pedido futura (hora de Lima) |
+| Valores permitidos | `estado_pedido`, `es_nueva_vendedora` y `tipo` dentro de su catálogo |
+
+Como pide el informe, el piloto se extiende a `fact_pedidos_detalle` y
+`dim_producto`: cada línea de detalle pertenece a un pedido, cada producto tiene
+categoría y `fuente_categoria` está en su catálogo. Que cada línea corresponda a
+un producto del catálogo es advertencia (ver la tabla de abajo).
+
 Las reglas que aún requieren confirmación de negocio no se incluyen en esta versión:
-montos negativos, coordinadoras o líderes ausentes y relaciones de productos
-históricos. Se incorporarán después de medirlas en dev.
+coordinadoras o líderes ausentes en `dim_vendedor` y cantidades negativas en el
+detalle (devoluciones o ajustes sin confirmar).
 
 ## Reglas críticas y advertencias
 
@@ -37,6 +51,7 @@ que corresponde corregir en la transformación:
 | `fact_pedidos` | `estado_pedido` tiene un nombre conocido | 8 | `fact_pedidos.sql` deja pasar el código de los estados que no traduce |
 | `dim_campana` | La fecha inicial no es posterior a la final | 1 | Agregar la campaña a las correcciones a mano de `dim_campana.sql` |
 | `dim_ubicacion` | Los departamentos del Perú tienen nombre | 1 | `PE030000` no tiene departamento en `ref_ubigeo.csv` (Apurímac) |
+| `fact_pedidos_detalle` | Cada línea corresponde a un producto del catálogo | ≈36.000 (10%, según `modelo_dimensional.md`) | Decidir cómo tratar los productos dados de baja; casi todas las líneas son antiguas |
 
 Cuando se corrija una, la regla vuelve a ser crítica: quitar su `severity`.
 
@@ -89,6 +104,41 @@ enlaces de cada página como direcciones completas de `storage.cloud.google.com`
 que vuelven a pasar por la autenticación. Si el navegador tiene varias cuentas de
 Google iniciadas y un enlace devuelve un error de permisos, agregar
 `?authuser=<n>` con el número de la cuenta correcta.
+
+## Señales para Observabilidad
+
+El Job no envía avisos. Según el informe, Cloud Logging recoge sus registros y
+Datadog centraliza las alertas ante un rechazo de calidad (frente de
+Observabilidad). El Job escribe una línea JSON por evento, con `severity` para que
+Cloud Logging le asigne el nivel:
+
+| Evento | `severity` | Cuándo | Campos útiles |
+| --- | --- | --- | --- |
+| `quality_started` | `INFO` | Al empezar | `run_id`, `dataset`, `tables` |
+| `quality_table` | `ERROR` si falló una regla crítica, `WARNING` si solo advertencias, `INFO` si pasó | Una por tabla | `table`, `critical_failures`, `warnings` (descripciones de las reglas, sin valores de los datos) |
+| `quality_finished` | `ERROR` si se rechazó, `WARNING` si pasó con advertencias, `INFO` si pasó limpio | Al terminar | `success`, `warnings`, `data_docs_prefix` (carpeta del reporte) |
+| `quality_error` | `ERROR` | Error técnico: no se pudo validar | `error_type`, `message` |
+
+Filtros de Cloud Logging para las alertas (dev; en prod cambia el proyecto):
+
+```text
+# Rechazo de calidad o error técnico del Job
+resource.type="cloud_run_job"
+resource.labels.job_name="glamour-dataops-dev-crj-quality"
+severity>=ERROR
+jsonPayload.event=("quality_finished" OR "quality_error")
+
+# Detalle por tabla de un rechazo
+resource.type="cloud_run_job"
+resource.labels.job_name="glamour-dataops-dev-crj-quality"
+jsonPayload.event="quality_table"
+severity>=ERROR
+```
+
+Cuando el Job falla, el workflow también registra el error del paso
+`validar_calidad` (nivel de registro `LOG_ERRORS_ONLY`). La alerta puede enlazar el
+reporte con `data_docs_prefix`, o con `reporte_calidad` en la salida del workflow
+cuando la ejecución termina bien.
 
 ## Pruebas
 
