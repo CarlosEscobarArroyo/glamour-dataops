@@ -9,10 +9,10 @@ name: Deploy Jobs
 on:
   pull_request:
     branches: [dev, main]
-    paths: ["src/extraction/**", "tests/extraction/**", ".github/workflows/deploy-jobs.yml"]
+    paths: ["src/extraction/**", "tests/extraction/**", "src/quality/**", "tests/quality/**", ".github/workflows/deploy-jobs.yml"]
   push:
     branches: [dev, main]
-    paths: ["src/extraction/**", "tests/extraction/**", ".github/workflows/deploy-jobs.yml"]
+    paths: ["src/extraction/**", "tests/extraction/**", "src/quality/**", "tests/quality/**", ".github/workflows/deploy-jobs.yml"]
   workflow_dispatch:
     inputs:
       componente:

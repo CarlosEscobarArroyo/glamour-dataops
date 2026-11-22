@@ -28,11 +28,14 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
      * Guarda respaldo inmutable (`.parquet`) en Cloud Storage (*Landing Zone*).
    * **Carga a Staging (load jobs de BigQuery, lanzados por el propio Workflow):**
      * Carga los `.parquet` de esa extracción como tablas crudas en el primer dataset de BigQuery (*Capa Staging*).
-   * **Paso 2 — Cloud Run Job: Data Quality (Great Expectations):**
-     * Evalúa reglas de completitud, unicidad, integridad referencial y rangos válidos sobre la *Capa Staging*.
-     * Si alguna validación falla, **Cloud Workflows detiene el pipeline** y envía alerta inmediata hacia **Datadog**.
-   * **Paso 3 — BigQuery Stored Procedures / SQL:**
-     * Únicamente si las pruebas de calidad son exitosas, transforma y consolida los datos desde *Staging* hacia el segundo dataset de BigQuery (*Modelo Dimensional*).
+   * **Paso 2 — BigQuery Stored Procedures / SQL:**
+     * Construye el modelo candidato desde *Staging* en `bq_validation`, sin modificar todavía el modelo publicado.
+   * **Paso 3 — Cloud Run Job: Data Quality (Great Expectations):**
+     * Evalúa completitud, unicidad, integridad referencial y rangos válidos sobre el modelo candidato.
+     * Si alguna validación falla, **Cloud Workflows detiene el pipeline** y conserva la última versión publicada.
+     * El Job ya está implementado; su llamada desde Workflows se activa después de calibrarlo en dev.
+   * **Publicación controlada:**
+     * Únicamente si las pruebas de calidad son exitosas, copia `bq_validation` al modelo dimensional que consume Looker Studio.
 3. **Looker Studio:** Consulta exclusivamente las tablas validadas del *Modelo Dimensional* para la gerencia y las coordinadoras.
 
 ---
@@ -48,8 +51,9 @@ El workflow [Deploy Jobs](./.github/workflows/deploy-jobs.yml) ejecuta las prueb
 que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `main` publica su imagen y
 despliega su Job. El workflow [Orquestación](./.github/workflows/orchestration.yml)
 publica la definición del flujo de Cloud Workflows cuando cambia `src/orchestration/`.
-Los componentes siguientes describen la estructura objetivo; las carpetas de
-calidad y gobierno aún no están implementadas.
+El Job de calidad ya está implementado y se despliega con el mismo CI; todavía
+debe calibrarse en dev antes de conectarlo al flujo diario. Gobierno aún no está
+implementado.
 
 * **`.github/workflows/`** — Pipelines CI/CD (GitHub Actions)
   * `deploy-jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
@@ -62,11 +66,12 @@ calidad y gobierno aún no están implementadas.
   * `environments/prod/`: Configuración del entorno `glamour-dataops-prod`.
 * **`src/`** — Código fuente del pipeline
   * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
-  * `quality/`: Contenedor 2 — Cloud Run Job de calidad con Great Expectations, pendiente.
+  * [`quality/`](./src/quality/README.md): Contenedor 2 — Cloud Run Job de calidad con Great Expectations. Tiene contratos para las once tablas y reglas profundas para el piloto; falta activarlo en la orquestación.
   * `transformation/`: Modelo dimensional en SQL. Un archivo por tabla (dimensiones y hechos) y `ref_ubigeo.csv`, la tabla de referencia de ubicaciones.
-  * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows: extracción, carga a Staging, construcción del modelo dimensional y su publicación. La validación de calidad está pendiente.
+  * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows: extracción, carga a Staging, construcción del modelo dimensional y su publicación. La llamada al Job de calidad está pendiente hasta calibrarlo en dev.
 * **`tests/`** — Pruebas, con la misma estructura que `src/`
   * `extraction/`: Pruebas unitarias del extractor.
+  * `quality/`: Pruebas unitarias de configuración, contratos, resultados y publicación de Data Docs, sin acceder a GCP.
   * `transformation/`: Pruebas de los archivos SQL y de `ref_ubigeo.csv`, sin acceder a BigQuery.
 * **`governance/`** — Documentación base y configuración de OpenMetadata
   * `data_dictionary.md`: Diccionario de datos de tablas y columnas.
