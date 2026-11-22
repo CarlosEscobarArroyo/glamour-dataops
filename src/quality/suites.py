@@ -214,6 +214,13 @@ def _dim_fecha(gxe, _qualified: Callable[[str], str]) -> list:
             "WHERE fecha < DATE '2010-01-01' OR fecha > DATE '2030-12-31'",
             "El calendario cubre únicamente el periodo 2010-2030.",
         ),
+        # PRUEBA TEMPORAL de la compuerta: regla crítica imposible (dim_fecha
+        # siempre tiene filas). Debe detener el workflow en validar_calidad sin
+        # tocar bq_dimensional. Revertir este commit después de la prueba.
+        gxe.ExpectTableRowCountToBeBetween(
+            max_value=0,
+            description="PRUEBA TEMPORAL: regla imposible para comprobar que el workflow se detiene.",
+        ),
     ]
 
 
