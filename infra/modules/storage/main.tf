@@ -40,13 +40,6 @@ resource "google_storage_bucket_iam_member" "landing_lectura" {
   member   = each.value
 }
 
-resource "google_storage_bucket_iam_member" "landing_listado" {
-  for_each = var.landing_listadores
-  bucket   = google_storage_bucket.landing.name
-  role     = "roles/storage.legacyBucketReader" # ver y listar, sin abrir los archivos
-  member   = each.value
-}
-
 resource "google_storage_bucket_iam_member" "data_docs_escritura" {
   for_each = var.data_docs_escritores
   bucket   = google_storage_bucket.data_docs.name

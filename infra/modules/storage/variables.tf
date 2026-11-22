@@ -24,11 +24,6 @@ variable "landing_lectores" {
   default = {}
 }
 
-variable "landing_listadores" {
-  type    = map(string)
-  default = {}
-}
-
 variable "data_docs_escritores" {
   type    = map(string)
   default = {}

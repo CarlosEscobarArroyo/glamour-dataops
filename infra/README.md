@@ -11,7 +11,7 @@ infra/
 ├── bootstrap/            Se corre una vez por proyecto, a mano: APIs, bucket del
 │                         estado, sa-terraform-<ambiente> y Workload Identity Federation.
 ├── modules/
-│   ├── iam/              Cuentas de servicio y roles de proyecto (pipeline y equipo).
+│   ├── iam/              Cuentas de servicio y roles de proyecto del pipeline.
 │   ├── vpc/              VPC, subred, Cloud Router, IP fija y Cloud NAT.
 │   ├── secrets/          Los secretos MYSQL_HOST y MYSQL_PASSWORD (vacíos) y quién los lee.
 │   ├── storage/          Landing zone (Parquet) y bucket de Data Docs.
@@ -41,8 +41,8 @@ y `backend.tf`.
 | `sa-deploy-<ambiente>` | Publicar imágenes, desplegar Jobs, publicar el workflow, cargar `ref_ubigeo` y publicar los procedimientos SQL | Repositorio de imágenes, proyecto y datasets `bq_staging` y `bq_validation`; solo desde el environment de GitHub de su ambiente |
 | `sa-terraform-<ambiente>` | Administrar la plataforma (sin `owner`) | Proyecto; solo la usa GitHub Actions |
 
-Los integrantes reciben los roles de la sección 7 del README principal
-(variable `equipo` en `terraform.tfvars`).
+Los accesos de los integrantes (roles de la sección 7 del README principal)
+se dan a mano en la consola, no con Terraform.
 
 ## Puesta en marcha (una vez por proyecto)
 

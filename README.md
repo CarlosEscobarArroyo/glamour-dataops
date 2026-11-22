@@ -129,7 +129,7 @@ valor. El código de los componentes solo lee variables de entorno.
 | Referencias a recursos | Bucket landing, cuenta de servicio, red | `job.yaml`, formadas a partir del proyecto (`${PROJECT_ID}-cs-landing`) |
 | Secretos | `MYSQL_HOST`, `MYSQL_PASSWORD` | Valor en Secret Manager; referencia en `job.yaml`; Cloud Run los inyecta como variables de entorno |
 | Datos de conexión no secretos | Puerto, base y usuario de MariaDB | `job.yaml`, escritos directamente: son iguales en dev y prod |
-| Políticas del ambiente | Retención, scheduler pausado, protección contra borrado, equipo | `terraform.tfvars` |
+| Políticas del ambiente | Retención, scheduler pausado, protección contra borrado | `terraform.tfvars` |
 | Dimensionamiento del Job | CPU, memoria, timeout, reintentos | `job.yaml` |
 | Parámetros de operación | Tamaño de lote, timeouts de conexión | Constante en el código; pasa a variable en `job.yaml` solo si un ambiente necesita otro valor |
 | Reglas del pipeline | Lista de tablas, formato, rutas, expectativas, SQL | Código |

@@ -12,12 +12,6 @@ variable "bq_location" {
   default = "US"
 }
 
-variable "equipo" {
-  description = "Correos de los integrantes del grupo."
-  type        = list(string)
-  default     = []
-}
-
 variable "retencion_dias" {
   type    = number
   default = 30

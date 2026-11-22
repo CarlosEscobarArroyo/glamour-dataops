@@ -29,17 +29,6 @@ locals {
     "deploy-workflows"     = { cuenta = "deploy", rol = "roles/workflows.editor" }
     "deploy-bigquery"      = { cuenta = "deploy", rol = "roles/bigquery.jobUser" }
   }
-
-  # Roles del equipo definidos en el README (sección 7): ver y operar, no administrar datos.
-  roles_equipo = [
-    "roles/browser",
-    "roles/bigquery.dataViewer",
-    "roles/bigquery.jobUser",
-    "roles/run.developer",
-    "roles/workflows.admin",
-    "roles/secretmanager.viewer",
-    "roles/logging.viewer",
-  ]
 }
 
 resource "google_service_account" "sa" {
@@ -53,13 +42,6 @@ resource "google_project_iam_member" "sa" {
   project  = var.project_id
   role     = each.value.rol
   member   = google_service_account.sa[each.value.cuenta].member
-}
-
-resource "google_project_iam_member" "equipo" {
-  for_each = { for par in setproduct(var.equipo, local.roles_equipo) : "${par[0]}|${par[1]}" => par }
-  project  = var.project_id
-  role     = each.value[1]
-  member   = "user:${each.value[0]}"
 }
 
 # sa-deploy asigna a cada Job y al workflow su cuenta de ejecución.

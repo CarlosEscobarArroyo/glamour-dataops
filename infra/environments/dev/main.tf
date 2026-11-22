@@ -8,7 +8,6 @@ locals {
 module "iam" {
   source     = "../../modules/iam"
   project_id = var.project_id
-  equipo     = var.equipo
 }
 
 module "vpc" {
@@ -33,7 +32,6 @@ module "storage" {
 
   landing_escritores   = { extraction = module.iam.members.extraction }
   landing_lectores     = { workflows = module.iam.members.workflows } # carga de la landing a staging
-  landing_listadores   = module.iam.equipo_members
   data_docs_escritores = { calidad = module.iam.members.quality }
 }
 
