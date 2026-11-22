@@ -15,3 +15,13 @@ output "repositorio_imagenes" {
 output "cuentas_de_servicio" {
   value = module.iam.emails
 }
+
+output "openmetadata_url" {
+  description = "Interfaz de OpenMetadata, una vez instalado (vacío si no hay VM)."
+  value       = one([for vm in module.openmetadata : "http://${vm.ip}:8585"])
+}
+
+output "openmetadata_ssh" {
+  description = "Comando para entrar a la VM (vacío si no hay VM)."
+  value       = one([for vm in module.openmetadata : "gcloud compute ssh ${vm.nombre} --zone=${vm.zona} --project=${var.project_id} --tunnel-through-iap"])
+}

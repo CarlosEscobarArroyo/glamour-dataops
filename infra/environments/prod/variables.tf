@@ -27,3 +27,9 @@ variable "proteger" {
   type        = bool
   default     = true
 }
+
+variable "openmetadata" {
+  description = "Crea la VM de OpenMetadata (catálogo de datos)."
+  type        = bool
+  default     = false
+}
