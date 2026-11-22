@@ -1,17 +1,18 @@
-name: Jobs
+name: Deploy Jobs
 
 # Un solo workflow para todos los Cloud Run Jobs. Un componente es una carpeta de
 # src/ con Dockerfile y job.yaml; sus pruebas están en tests/<misma carpeta>/.
 # Pull request: pruebas del componente que cambió. Push a dev o main: además publica
 # la imagen y despliega el Job (dev -> proyecto dev; main -> prod, con aprobación).
+# Al agregar un Job nuevo, sumar su carpeta de src/ y de tests/ a los dos "paths".
 
 on:
   pull_request:
     branches: [dev, main]
-    paths: ["src/**", "tests/**", ".github/workflows/jobs.yml"]
+    paths: ["src/extraction/**", "tests/extraction/**", ".github/workflows/deploy-jobs.yml"]
   push:
     branches: [dev, main]
-    paths: ["src/**", "tests/**", ".github/workflows/jobs.yml"]
+    paths: ["src/extraction/**", "tests/extraction/**", ".github/workflows/deploy-jobs.yml"]
   workflow_dispatch:
     inputs:
       componente:
@@ -33,29 +34,29 @@ jobs:
         with:
           fetch-depth: 0
       - id: lista
-        name: Componentes que cambiaron
+        name: Jobs que cambiaron
         env:
+          # Commit contra el que se compara: la base del pull request o el push anterior.
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           ELEGIDO: ${{ inputs.componente }}
         run: |
+          # Todos los Jobs: cada carpeta de src/ que tiene un job.yaml.
           todos=$(for f in src/*/job.yaml; do basename "$(dirname "$f")"; done)
+
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            cambiados=${ELEGIDO:-$todos}
+            cambiados=${ELEGIDO:-$todos} # manual: el elegido, o todos
           elif ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
-            cambiados=$todos # rama nueva o historial reescrito: no hay con qué comparar
+            cambiados=$todos # rama nueva: no hay commit anterior con qué comparar
           else
-            archivos=$(git diff --name-only "$BASE" "$GITHUB_SHA")
-            if grep -qx '.github/workflows/jobs.yml' <<<"$archivos"; then
-              cambiados=$todos
-            else
-              cambiados=$(sed -nE 's#^(src|tests)/([^/]+)/.*#\2#p' <<<"$archivos" | sort -u)
-            fi
+            # Un Job cambió si el push tocó su carpeta de código o la de sus pruebas.
+            cambiados=""
+            for job in $todos; do
+              git diff --quiet "$BASE" "$GITHUB_SHA" -- "src/$job" "tests/$job" || cambiados+=" $job"
+            done
           fi
-          lista=$(for c in $cambiados; do
-            if [ -f "src/$c/job.yaml" ]; then echo "$c"; fi
-          done | jq -Rnc '[inputs]')
-          echo "componentes=$lista" >> "$GITHUB_OUTPUT"
-          echo "Componentes: $lista"
+
+          # La lista va en JSON, por ejemplo ["extraction"], para los pasos siguientes.
+          echo "componentes=$(jq -nc '$ARGS.positional' --args $cambiados)" >> "$GITHUB_OUTPUT"
 
   pruebas:
     needs: detectar

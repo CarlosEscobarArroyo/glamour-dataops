@@ -69,7 +69,7 @@ Los integrantes reciben los roles de la sección 7 del README principal
 3. En *Settings > Environments*, crear `dev` y `prod`. A `prod` agregarle
    revisores obligatorios: así ningún `apply` ni despliegue llega a producción sin
    aprobación. En cada environment, crear las variables que usa
-   [`jobs.yml`](../.github/workflows/jobs.yml):
+   [`deploy-jobs.yml`](../.github/workflows/deploy-jobs.yml):
 
    | Variable | Valor (dev) |
    | --- | --- |
@@ -89,7 +89,7 @@ Los integrantes reciben los roles de la sección 7 del README principal
    ```
 
 5. Hacer merge a `dev`. GitHub Actions aplica la infraestructura y después
-   `jobs.yml` puede desplegar los Jobs.
+   `deploy-jobs.yml` puede desplegar los Jobs.
 
 6. Si un secreto es nuevo, cargar su valor (nunca en el repo ni en Terraform).
    Repetir para `MYSQL_HOST` y `MYSQL_PASSWORD`:
@@ -114,7 +114,7 @@ Se dispara con cambios en `infra/`.
 ## Acuerdos con los otros frentes
 
 - **Jobs (CI/CD):** Terraform no crea los Cloud Run Jobs. Los despliega
-  [`jobs.yml`](../.github/workflows/jobs.yml) desde `src/<componente>/job.yaml`, con
+  [`deploy-jobs.yml`](../.github/workflows/deploy-jobs.yml) desde `src/<componente>/job.yaml`, con
   la imagen publicada en `<region>-docker.pkg.dev/<proyecto>/<proyecto>-ar-jobs/`
   (ver `docs/artifact_registry.md`). Terraform aporta la red, las cuentas, el
   secreto, el bucket y el repositorio de imágenes que ese archivo referencia.

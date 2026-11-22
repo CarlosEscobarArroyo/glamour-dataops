@@ -141,7 +141,7 @@ Las pruebas unitarias no sustituyen la validación contra los datos reales.
 
 ## GitHub Actions
 
-[`jobs.yml`](../../.github/workflows/jobs.yml) es el workflow único de todos los
+[`deploy-jobs.yml`](../../.github/workflows/deploy-jobs.yml) es el workflow único de todos los
 Jobs. Cuando cambia `src/extraction/` o `tests/extraction/`, ejecuta las pruebas con
 Python 3.11; en `dev` y `main` además publica la imagen y aplica `job.yaml`. Las
 pruebas usan dobles de prueba para MariaDB y GCP; no necesitan credenciales.

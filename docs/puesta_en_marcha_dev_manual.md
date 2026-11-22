@@ -305,7 +305,7 @@ gcloud iam service-accounts add-iam-policy-binding sa-deploy-dev@$P.iam.gservice
 
 ## 6. Variables del environment `dev` en GitHub
 
-El workflow [`jobs.yml`](../.github/workflows/jobs.yml) no tiene valores de GCP
+El workflow [`deploy-jobs.yml`](../.github/workflows/deploy-jobs.yml) no tiene valores de GCP
 escritos: los lee de las variables del environment de GitHub en el que corre
 (`dev` para la rama `dev`). No son secretos; son identificadores.
 
@@ -323,7 +323,7 @@ gh variable set WIF_PROVIDER --env dev --body projects/1048504689427/locations/g
 
 ## 7. Desplegar el Job
 
-Un push a `dev` que toque `src/` o `tests/` dispara `jobs.yml`. Para el componente
+Un push a `dev` que toque `src/extraction/` o `tests/extraction/` dispara `deploy-jobs.yml`. Para el componente
 que cambió:
 
 1. Ejecuta sus pruebas unitarias.

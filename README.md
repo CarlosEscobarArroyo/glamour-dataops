@@ -44,7 +44,7 @@ Sus pruebas viven en `tests/`, que replica la estructura de `src/`.
 
 Guía del primer contenedor: [extracción de MariaDB a GCS](./src/extraction/README.md).
 Convención de publicación: [imágenes de los Jobs en Artifact Registry](./docs/artifact_registry.md).
-El workflow [Jobs](./.github/workflows/jobs.yml) ejecuta las pruebas del componente
+El workflow [Deploy Jobs](./.github/workflows/deploy-jobs.yml) ejecuta las pruebas del componente
 que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `main` publica su imagen y
 despliega su Job. El workflow [Orquestación](./.github/workflows/orchestration.yml)
 publica la definición del flujo de Cloud Workflows cuando cambia `src/orchestration/`.
@@ -52,7 +52,7 @@ Los componentes siguientes describen la estructura objetivo; las carpetas de
 calidad y gobierno aún no están implementadas.
 
 * **`.github/workflows/`** — Pipelines CI/CD (GitHub Actions)
-  * `jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
+  * `deploy-jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
   * `orchestration.yml`: Valida y publica la definición del workflow de Cloud Workflows.
   * `transformation.yml`: Publica el SQL de `src/transformation/` como procedimientos de BigQuery y carga `ref_ubigeo.csv`.
   * `terraform.yml`: Validación, plan y despliegue de la infraestructura en GCP (`dev` / `prod`).
@@ -158,7 +158,7 @@ Para el extractor:
 | `src/extraction/extract.py` | Lee `GCS_BUCKET` y las cinco `MYSQL_*`. Nombra en el log las que falten y la causa de un fallo de conexión |
 | `src/extraction/job.yaml` | Imagen, las seis variables del contenedor (cuatro con valor y dos secretos), recursos, cuenta de servicio y red |
 | `tests/extraction/` | Pruebas unitarias |
-| `.github/workflows/jobs.yml` | Pruebas, imagen y despliegue |
+| `.github/workflows/deploy-jobs.yml` | Pruebas, imagen y despliegue |
 | Secret Manager de cada proyecto | Valores de `MYSQL_HOST` y `MYSQL_PASSWORD` |
 
 `config_dev.json` desaparece. La ejecución local queda fuera de alcance: el

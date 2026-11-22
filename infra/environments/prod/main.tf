@@ -63,7 +63,7 @@ resource "google_artifact_registry_repository" "imagenes" {
   }
 }
 
-# Los Cloud Run Jobs no se crean aquí: los despliega el CI (.github/workflows/jobs.yml)
+# Los Cloud Run Jobs no se crean aquí: los despliega el CI (.github/workflows/deploy-jobs.yml)
 # desde src/<componente>/job.yaml. Terraform solo le da a sa-deploy lo que necesita.
 resource "google_artifact_registry_repository_iam_member" "deploy" {
   repository = google_artifact_registry_repository.imagenes.name
