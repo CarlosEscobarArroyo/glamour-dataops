@@ -32,8 +32,8 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
      * Construye el modelo candidato desde *Staging* en `bq_validation`, sin modificar todavía el modelo publicado.
    * **Paso 3 — Cloud Run Job: Data Quality (Great Expectations):**
      * Evalúa completitud, unicidad, integridad referencial y rangos válidos sobre el modelo candidato.
-     * Si alguna validación falla, **Cloud Workflows detiene el pipeline** y conserva la última versión publicada.
-     * El Job ya está implementado; su llamada desde Workflows se activa después de calibrarlo en dev.
+     * Si alguna regla crítica falla, **Cloud Workflows detiene el pipeline** y conserva la última versión publicada. Las advertencias (defectos conocidos del origen) quedan en el reporte sin detenerlo.
+     * Publica el reporte en *Data Docs* (`gs://<proyecto>-cs-data-docs/runs/<run_id>/`).
    * **Publicación controlada:**
      * Únicamente si las pruebas de calidad son exitosas, copia `bq_validation` al modelo dimensional que consume Looker Studio.
 3. **Looker Studio:** Consulta exclusivamente las tablas validadas del *Modelo Dimensional* para la gerencia y las coordinadoras.
@@ -51,9 +51,8 @@ El workflow [Deploy Jobs](./.github/workflows/deploy-jobs.yml) ejecuta las prueb
 que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `main` publica su imagen y
 despliega su Job. El workflow [Orquestación](./.github/workflows/orchestration.yml)
 publica la definición del flujo de Cloud Workflows cuando cambia `src/orchestration/`.
-El Job de calidad ya está implementado y se despliega con el mismo CI; todavía
-debe calibrarse en dev antes de conectarlo al flujo diario. Gobierno aún no está
-implementado.
+El Job de calidad se despliega con el mismo CI y el workflow lo ejecuta antes de
+publicar el modelo. Gobierno aún no está implementado.
 
 * **`.github/workflows/`** — Pipelines CI/CD (GitHub Actions)
   * `deploy-jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
@@ -66,9 +65,9 @@ implementado.
   * `environments/prod/`: Configuración del entorno `glamour-dataops-prod`.
 * **`src/`** — Código fuente del pipeline
   * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
-  * [`quality/`](./src/quality/README.md): Contenedor 2 — Cloud Run Job de calidad con Great Expectations. Tiene contratos para las once tablas y reglas profundas para el piloto; falta activarlo en la orquestación.
+  * [`quality/`](./src/quality/README.md): Contenedor 2 — Cloud Run Job de calidad con Great Expectations. Tiene contratos para las once tablas y reglas profundas para el piloto; el workflow lo ejecuta antes de publicar.
   * `transformation/`: Modelo dimensional en SQL. Un archivo por tabla (dimensiones y hechos) y `ref_ubigeo.csv`, la tabla de referencia de ubicaciones.
-  * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows: extracción, carga a Staging, construcción del modelo dimensional y su publicación. La llamada al Job de calidad está pendiente hasta calibrarlo en dev.
+  * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows: extracción, carga a Staging, construcción del modelo dimensional, validación de calidad y publicación.
 * **`tests/`** — Pruebas, con la misma estructura que `src/`
   * `extraction/`: Pruebas unitarias del extractor.
   * `quality/`: Pruebas unitarias de configuración, contratos, resultados y publicación de Data Docs, sin acceder a GCP.

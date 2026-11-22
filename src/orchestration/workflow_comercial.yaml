@@ -7,7 +7,8 @@
 #   2. Carga cada tabla de esa extracción en el dataset staging de BigQuery.
 #   3. Construye el modelo dimensional en el dataset validation, ejecutando los
 #      procedimientos que publica el CI desde src/transformation/.
-#   4. Validación de calidad: pendiente (ver el comentario más abajo).
+#   4. Valida el modelo con el Job de calidad (Great Expectations). Si alguna
+#      regla crítica falla, el workflow se detiene y no publica nada.
 #   5. Publica el modelo en el dataset dimensional, que es el que lee Looker Studio.
 main:
   params: [args]
@@ -36,6 +37,7 @@ main:
               - fact_stock_actual
               - fact_movimientos_stock
           - job: ${sys.get_env("JOB_EXTRACCION")}
+          - job_calidad: ${sys.get_env("JOB_CALIDAD")}
 
     # Si la extracción falla se reintenta una vez. Cada intento escribe en una
     # carpeta nueva, porque el extractor nunca sobrescribe archivos.
@@ -139,10 +141,26 @@ main:
                   trabajo: ${trabajo_procedimiento}
                   descripcion: ${"el procedimiento sp_" + tabla}
 
-    # PENDIENTE: validación de calidad. Aquí va el paso que ejecuta el Job de
-    # calidad (JOB_CALIDAD) sobre el dataset validation. Si falla, el workflow debe
-    # detenerse antes de publicar, y dimensional conserva los datos anteriores.
-    # Mientras no exista, el modelo se publica sin validar.
+    # Valida el modelo recién construido en validation. Si una regla crítica falla,
+    # el Job termina con error, este paso lanza una excepción y no se publica
+    # nada: dimensional conserva los datos anteriores. Las advertencias no
+    # detienen el pipeline; quedan en Data Docs y en el log del Job.
+    # Sin reintentos: los datos no cambian entre intentos, así que reintentar una
+    # validación fallida solo retrasaría el aviso. RUN_ID lleva el reporte de
+    # Data Docs a runs/<run_id>/, el mismo identificador de la carpeta de la landing.
+    - validar_calidad:
+        call: googleapis.run.v1.namespaces.jobs.run
+        args:
+          name: ${"namespaces/" + proyecto + "/jobs/" + job_calidad}
+          location: ${region}
+          body:
+            overrides:
+              containerOverrides:
+                env:
+                  - name: RUN_ID
+                    value: ${run_id}
+          connector_params:
+            timeout: 1900  # algo más que el timeout del Job (1800 s)
 
     # Copia las tablas ya construidas a dimensional, reemplazando las anteriores.
     - publicar_modelo:
@@ -179,6 +197,7 @@ main:
           carpeta: ${"gs://" + bucket + "/" + run_prefix}
           tablas_cargadas: ${manifiesto.selected_tables}
           tablas_publicadas: ${tablas_modelo}
+          reporte_calidad: ${"gs://" + proyecto + "-cs-data-docs/runs/" + run_id + "/index.html"}
 
 # Predicado de reintento: cualquier error de la extracción se reintenta.
 reintentar_siempre:

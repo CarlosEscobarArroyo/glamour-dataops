@@ -1,9 +1,12 @@
 # Calidad de datos con Great Expectations
 
-Cloud Run Job que valida el modelo recién construido en `bq_validation`. La
-activación en Cloud Workflows se hará después de calibrar las reglas manualmente
-en dev. Cuando se active, un rechazo impedirá copiar el modelo candidato a
-`bq_dimensional`, que conservará su última versión aprobada.
+Cloud Run Job que valida el modelo recién construido en `bq_validation`. Lo
+ejecuta el paso `validar_calidad` de
+[`workflow_comercial.yaml`](../orchestration/workflow_comercial.yaml), después de
+construir el modelo y antes de publicarlo. Un rechazo detiene el workflow: el
+modelo candidato no se copia a `bq_dimensional`, que conserva su última versión
+aprobada. El workflow le pasa `RUN_ID`, el mismo identificador de la carpeta de
+la extracción en la landing.
 
 ## Alcance
 
@@ -96,8 +99,9 @@ python -m pip install -r src/quality/requirements.txt
 python -B -m unittest discover -s tests/quality -v
 ```
 
-Después del despliegue se debe ejecutar el Job manualmente en dev y calibrar las
-reglas con datos reales antes de conectarlo al pipeline diario.
+Para probar un cambio en las reglas sin correr todo el pipeline, ejecutar el Job
+a mano en dev después del despliegue. Calibrar primero ahí: una regla crítica mal
+calibrada detendría la publicación diaria.
 
 ## Agregar una tabla o regla
 
@@ -108,4 +112,4 @@ reglas con datos reales antes de conectarlo al pipeline diario.
    `WARNING_PREFIX`.
 3. Agregar o ajustar las pruebas.
 4. Validar primero en dev. Una expectativa demasiado estricta detendría la
-   publicación diaria una vez activada la compuerta.
+   publicación diaria.
