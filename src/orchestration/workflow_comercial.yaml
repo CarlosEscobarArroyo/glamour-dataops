@@ -27,11 +27,14 @@ main:
               - dim_fecha
               - dim_campana
               - dim_producto
+              - dim_variante
               - dim_coordinadora
               - dim_ubicacion
               - dim_vendedor
               - fact_pedidos
               - fact_pedidos_detalle
+              - fact_stock_actual
+              - fact_movimientos_stock
           - job: ${sys.get_env("JOB_EXTRACCION")}
 
     # Si la extracción falla se reintenta una vez. Cada intento escribe en una
