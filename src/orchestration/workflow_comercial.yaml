@@ -2,10 +2,13 @@
 # (.github/workflows/orchestration.yml). Las variables de sys.get_env las define
 # Terraform (infra/modules/orchestration).
 #
-# Pasos implementados:
+# Pasos:
 #   1. Ejecuta el Job de extracción: MariaDB -> Parquet en la landing.
 #   2. Carga cada tabla de esa extracción en el dataset staging de BigQuery.
-# Pendientes: calidad (Great Expectations) y transformación al modelo dimensional.
+#   3. Construye el modelo dimensional en el dataset validation, ejecutando los
+#      procedimientos que publica el CI desde src/transformation/.
+#   4. Validación de calidad: pendiente (ver el comentario más abajo).
+#   5. Publica el modelo en el dataset dimensional, que es el que lee Looker Studio.
 main:
   params: [args]
   steps:
@@ -15,6 +18,20 @@ main:
           - region: ${sys.get_env("GOOGLE_CLOUD_LOCATION")}
           - bucket: ${sys.get_env("LANDING_BUCKET")}
           - dataset: ${sys.get_env("DATASET_STAGING")}
+          - dataset_validation: ${sys.get_env("DATASET_VALIDATION")}
+          - dataset_dimensional: ${sys.get_env("DATASET_DIMENSION")}
+          # Tablas del modelo dimensional, en el orden en que se construyen: las
+          # dimensiones primero, porque los hechos las leen. Cada una tiene su
+          # procedimiento sp_<tabla> en src/transformation/<tabla>.sql.
+          - tablas_modelo:
+              - dim_fecha
+              - dim_campana
+              - dim_producto
+              - dim_coordinadora
+              - dim_ubicacion
+              - dim_vendedor
+              - fact_pedidos
+              - fact_pedidos_detalle
           - job: ${sys.get_env("JOB_EXTRACCION")}
 
     # Si la extracción falla se reintenta una vez. Cada intento escribe en una
@@ -91,11 +108,76 @@ main:
                             projectId: ${proyecto}
                             datasetId: ${dataset}
                             tableId: ${tabla}
+                  result: trabajo_carga
+              - verificar_carga:
+                  call: verificar_trabajo
+                  args:
+                    trabajo: ${trabajo_carga}
+                    descripcion: ${"la carga de " + tabla}
+
+    # Ejecuta los procedimientos uno por uno, en orden. Cada uno reconstruye su
+    # tabla en validation a partir de staging.
+    - construir_modelo:
+        for:
+          value: tabla
+          in: ${tablas_modelo}
+          steps:
+            - ejecutar_procedimiento:
+                call: googleapis.bigquery.v2.jobs.insert
+                args:
+                  projectId: ${proyecto}
+                  body:
+                    configuration:
+                      query:
+                        query: '${"CALL `" + dataset_validation + "`.sp_" + tabla + "()"}'
+                        useLegacySql: false
+                result: trabajo_procedimiento
+            - verificar_procedimiento:
+                call: verificar_trabajo
+                args:
+                  trabajo: ${trabajo_procedimiento}
+                  descripcion: ${"el procedimiento sp_" + tabla}
+
+    # PENDIENTE: validación de calidad. Aquí va el paso que ejecuta el Job de
+    # calidad (JOB_CALIDAD) sobre el dataset validation. Si falla, el workflow debe
+    # detenerse antes de publicar, y dimensional conserva los datos anteriores.
+    # Mientras no exista, el modelo se publica sin validar.
+
+    # Copia las tablas ya construidas a dimensional, reemplazando las anteriores.
+    - publicar_modelo:
+        parallel:
+          for:
+            value: tabla
+            in: ${tablas_modelo}
+            steps:
+              - copiar_tabla:
+                  call: googleapis.bigquery.v2.jobs.insert
+                  args:
+                    projectId: ${proyecto}
+                    body:
+                      configuration:
+                        copy:
+                          sourceTable:
+                            projectId: ${proyecto}
+                            datasetId: ${dataset_validation}
+                            tableId: ${tabla}
+                          destinationTable:
+                            projectId: ${proyecto}
+                            datasetId: ${dataset_dimensional}
+                            tableId: ${tabla}
+                          writeDisposition: WRITE_TRUNCATE
+                  result: trabajo_copia
+              - verificar_copia:
+                  call: verificar_trabajo
+                  args:
+                    trabajo: ${trabajo_copia}
+                    descripcion: ${"la publicación de " + tabla}
 
     - terminar:
         return:
           carpeta: ${"gs://" + bucket + "/" + run_prefix}
           tablas_cargadas: ${manifiesto.selected_tables}
+          tablas_publicadas: ${tablas_modelo}
 
 # Predicado de reintento: cualquier error de la extracción se reintenta.
 reintentar_siempre:
@@ -103,3 +185,13 @@ reintentar_siempre:
   steps:
     - reintentar:
         return: true
+
+# Detiene el pipeline si un trabajo de BigQuery (carga, consulta o copia) terminó
+# con error.
+verificar_trabajo:
+  params: [trabajo, descripcion]
+  steps:
+    - revisar:
+        switch:
+          - condition: ${"errorResult" in trabajo.status}
+            raise: '${"Falló " + descripcion + ": " + trabajo.status.errorResult.message}'

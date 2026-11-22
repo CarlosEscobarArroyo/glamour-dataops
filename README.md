@@ -64,7 +64,7 @@ calidad y gobierno aún no están implementadas.
   * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
   * `quality/`: Contenedor 2 — Cloud Run Job de calidad con Great Expectations, pendiente.
   * `transformation/`: Modelo dimensional en SQL. Un archivo por tabla (dimensiones y hechos) y `ref_ubigeo.csv`, la tabla de referencia de ubicaciones.
-  * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows; hoy ejecuta la extracción y la carga a Staging.
+  * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows: extracción, carga a Staging, construcción del modelo dimensional y su publicación. La validación de calidad está pendiente.
 * **`tests/`** — Pruebas, con la misma estructura que `src/`
   * `extraction/`: Pruebas unitarias del extractor.
   * `transformation/`: Pruebas de los archivos SQL y de `ref_ubigeo.csv`, sin acceder a BigQuery.
