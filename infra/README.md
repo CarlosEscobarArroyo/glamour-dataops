@@ -15,7 +15,7 @@ infra/
 │   ├── vpc/              VPC, subred, Cloud Router, IP fija y Cloud NAT.
 │   ├── secrets/          Los secretos MYSQL_HOST y MYSQL_PASSWORD (vacíos) y quién los lee.
 │   ├── storage/          Landing zone (Parquet) y bucket de Data Docs.
-│   ├── bigquery/         Datasets staging y dimensional, con sus accesos.
+│   ├── bigquery/         Datasets staging, validation y dimensional, con sus accesos.
 │   └── orchestration/    Cloud Workflows y Cloud Scheduler (5:00 a. m., Lima).
 └── environments/
     ├── dev/              glamour-dataops-dev  (rama dev)
@@ -31,14 +31,14 @@ y `backend.tf`.
 | --- | --- | --- |
 | `sa-extraction-<ambiente>` | Crear objetos (no borrar ni sobrescribir) | Bucket landing |
 | | Leer el valor | Secretos `MYSQL_HOST` y `MYSQL_PASSWORD` |
-| `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Dataset `bq_staging` |
+| `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Datasets `bq_staging` y `bq_validation` |
 | | Escribir Data Docs | Bucket de Data Docs |
 | `sa-workflows-<ambiente>` | Ejecutar los Jobs | Proyecto (los Jobs los crea el CI) |
 | | Leer Parquet | Bucket landing |
-| | Editar tablas y ejecutar consultas | Datasets `bq_staging` y `bq_dimensional` |
+| | Editar tablas y ejecutar consultas | Datasets `bq_staging`, `bq_validation` y `bq_dimensional` |
 | `sa-scheduler-<ambiente>` | Iniciar ejecuciones del workflow | Proyecto |
 | `sa-looker-<ambiente>` | Leer tablas | Solo `bq_dimensional` |
-| `sa-deploy-<ambiente>` | Publicar imágenes, desplegar Jobs y publicar el workflow | Repositorio de imágenes y proyecto; solo desde el environment de GitHub de su ambiente |
+| `sa-deploy-<ambiente>` | Publicar imágenes, desplegar Jobs, publicar el workflow, cargar `ref_ubigeo` y publicar los procedimientos SQL | Repositorio de imágenes, proyecto y datasets `bq_staging` y `bq_validation`; solo desde el environment de GitHub de su ambiente |
 | `sa-terraform-<ambiente>` | Administrar la plataforma (sin `owner`) | Proyecto; solo la usa GitHub Actions |
 
 Los integrantes reciben los roles de la sección 7 del README principal

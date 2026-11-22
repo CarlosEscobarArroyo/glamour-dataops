@@ -12,7 +12,7 @@ locals {
     workflows  = "Orquestador Cloud Workflows"
     scheduler  = "Disparador diario de Cloud Scheduler"
     looker     = "Lectura del modelo dimensional para Looker Studio"
-    deploy     = "Despliegue de los Jobs y del workflow desde GitHub Actions"
+    deploy     = "Despliegue de los Jobs, el workflow y el SQL desde GitHub Actions"
   }
 
   roles_proyecto = {
@@ -25,6 +25,7 @@ locals {
     "workflows-jobs"   = { cuenta = "workflows", rol = "roles/run.jobsExecutorWithOverrides" }
     "deploy-run"       = { cuenta = "deploy", rol = "roles/run.developer" }
     "deploy-workflows" = { cuenta = "deploy", rol = "roles/workflows.editor" }
+    "deploy-bigquery"  = { cuenta = "deploy", rol = "roles/bigquery.jobUser" }
   }
 
   # Roles del equipo definidos en el README (sección 7): ver y operar, no administrar datos.

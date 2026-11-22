@@ -12,6 +12,16 @@ variable "staging_lectores" {
   default = {}
 }
 
+variable "validation_editores" {
+  type    = map(string)
+  default = {}
+}
+
+variable "validation_lectores" {
+  type    = map(string)
+  default = {}
+}
+
 variable "dimensional_editores" {
   type    = map(string)
   default = {}

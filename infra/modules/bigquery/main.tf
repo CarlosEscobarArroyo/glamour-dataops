@@ -1,9 +1,21 @@
-# Dos capas: staging (crudo, aislado del usuario final) y dimensional (lo que ve Looker Studio).
+# Tres capas: staging (crudo), validation (el modelo dimensional recién construido,
+# pendiente de validar) y dimensional (el modelo validado, lo que ve Looker Studio).
 
 resource "google_bigquery_dataset" "staging" {
   dataset_id                 = "bq_staging"
   location                   = var.location
   description                = "Tablas crudas cargadas desde la landing zone. No se expone a usuarios finales."
+  delete_contents_on_destroy = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "google_bigquery_dataset" "validation" {
+  dataset_id                 = "bq_validation"
+  location                   = var.location
+  description                = "Modelo dimensional recién construido, pendiente de validar. No se expone a usuarios finales."
   delete_contents_on_destroy = false
 
   lifecycle {
@@ -32,6 +44,20 @@ resource "google_bigquery_dataset_iam_member" "staging_editores" {
 resource "google_bigquery_dataset_iam_member" "staging_lectores" {
   for_each   = var.staging_lectores
   dataset_id = google_bigquery_dataset.staging.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "validation_editores" {
+  for_each   = var.validation_editores
+  dataset_id = google_bigquery_dataset.validation.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = each.value
+}
+
+resource "google_bigquery_dataset_iam_member" "validation_lectores" {
+  for_each   = var.validation_lectores
+  dataset_id = google_bigquery_dataset.validation.dataset_id
   role       = "roles/bigquery.dataViewer"
   member     = each.value
 }

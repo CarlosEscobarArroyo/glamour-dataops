@@ -41,8 +41,11 @@ module "bigquery" {
   source   = "../../modules/bigquery"
   location = var.bq_location
 
-  staging_editores     = { workflows = module.iam.members.workflows }
+  # sa-deploy carga la tabla de referencia ref_ubigeo y publica los procedimientos.
+  staging_editores     = { workflows = module.iam.members.workflows, deploy = module.iam.members.deploy }
   staging_lectores     = { calidad = module.iam.members.quality }
+  validation_editores  = { workflows = module.iam.members.workflows, deploy = module.iam.members.deploy }
+  validation_lectores  = { calidad = module.iam.members.quality }
   dimensional_editores = { workflows = module.iam.members.workflows }
   dimensional_lectores = { looker = module.iam.members.looker }
 }
@@ -80,10 +83,11 @@ module "orchestration" {
 
   variables = {
     # Nombres que el CI da a los Jobs (metadata.name de cada job.yaml).
-    JOB_EXTRACCION    = "${local.prefijo}-crj-extraction"
-    JOB_CALIDAD       = "${local.prefijo}-crj-quality"
-    LANDING_BUCKET    = module.storage.landing_bucket
-    DATASET_STAGING   = module.bigquery.staging_dataset
-    DATASET_DIMENSION = module.bigquery.dimensional_dataset
+    JOB_EXTRACCION     = "${local.prefijo}-crj-extraction"
+    JOB_CALIDAD        = "${local.prefijo}-crj-quality"
+    LANDING_BUCKET     = module.storage.landing_bucket
+    DATASET_STAGING    = module.bigquery.staging_dataset
+    DATASET_VALIDATION = module.bigquery.validation_dataset
+    DATASET_DIMENSION  = module.bigquery.dimensional_dataset
   }
 }
