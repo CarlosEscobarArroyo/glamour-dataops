@@ -22,7 +22,7 @@ Reglas de negocio de `fact_pedidos`, por tipo de control:
 | --- | --- |
 | Completitud | Campaña, vendedora, fecha, estado, montos, `es_nueva_vendedora` y `tipo` no nulos |
 | Integridad referencial | Campaña, vendedora, fecha del pedido, fecha de pago, ubicación y coordinadora existen en su dimensión (las tres últimas solo cuando traen valor) |
-| Rangos | Montos no negativos; `monto_pagado = monto_total_pedido − monto_comision + monto_envio` (tolerancia de 0,01); ninguna fecha de pedido futura (hora de Lima) |
+| Rangos | Ninguna fecha de pedido futura (hora de Lima). Como advertencias: montos no negativos y `monto_pagado = monto_total_pedido − monto_comision + monto_envio` (tolerancia de 0,01) |
 | Valores permitidos | `estado_pedido`, `es_nueva_vendedora` y `tipo` dentro de su catálogo |
 
 Como pide el informe, el piloto se extiende a `fact_pedidos_detalle` y
@@ -49,9 +49,11 @@ que corresponde corregir en la transformación:
 | --- | --- | ---: | --- |
 | `fact_pedidos` | Cada pedido tiene su vendedora en `dim_vendedor` | 71 | Definir qué hacer con pedidos de clientes que no son asesoras ni líderes, o que no existen en `persona` |
 | `fact_pedidos` | `estado_pedido` tiene un nombre conocido | 8 | `fact_pedidos.sql` deja pasar el código de los estados que no traduce |
+| `fact_pedidos` | Ningún monto es negativo | 2 | Revisar con el negocio si son devoluciones o errores de digitación |
+| `fact_pedidos` | `monto_pagado` = catálogo − comisión + envío | 1 | Revisar el pedido en el sistema de origen |
 | `dim_campana` | La fecha inicial no es posterior a la final | 1 | Agregar la campaña a las correcciones a mano de `dim_campana.sql` |
 | `dim_ubicacion` | Los departamentos del Perú tienen nombre | 1 | `PE030000` no tiene departamento en `ref_ubigeo.csv` (Apurímac) |
-| `fact_pedidos_detalle` | Cada línea corresponde a un producto del catálogo | ≈36.000 (10%, según `modelo_dimensional.md`) | Decidir cómo tratar los productos dados de baja; casi todas las líneas son antiguas |
+| `fact_pedidos_detalle` | Cada línea corresponde a un producto del catálogo | ≈36.000 (10%, según `modelo_dimensional.md`); aún sin medir en dev | Decidir cómo tratar los productos dados de baja; casi todas las líneas son antiguas |
 
 Cuando se corrija una, la regla vuelve a ser crítica: quitar su `severity`.
 

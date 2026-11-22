@@ -118,7 +118,12 @@ class SuiteContractTests(unittest.TestCase):
             {
                 "dim_campana": ["UnexpectedRowsExpectation"],
                 "dim_ubicacion": ["UnexpectedRowsExpectation"],
-                "fact_pedidos": ["ExpectColumnValuesToBeInSet", "UnexpectedRowsExpectation"],
+                "fact_pedidos": [
+                    "ExpectColumnValuesToBeInSet",
+                    "UnexpectedRowsExpectation",
+                    "UnexpectedRowsExpectation",
+                    "UnexpectedRowsExpectation",
+                ],
                 "fact_pedidos_detalle": ["UnexpectedRowsExpectation"],
             },
         )
@@ -129,7 +134,7 @@ class SuiteContractTests(unittest.TestCase):
             for item in suites.build_expectations(
                 FakeExpectations(), "fact_pedidos", "glamour-dataops-dev", "bq_validation"
             )
-            if item["type"] == "UnexpectedRowsExpectation" and "severity" not in item
+            if item["type"] == "UnexpectedRowsExpectation"
         ]
         text = "\n".join(queries)
         for dimension in ("dim_campana", "dim_fecha", "dim_ubicacion", "dim_coordinadora"):

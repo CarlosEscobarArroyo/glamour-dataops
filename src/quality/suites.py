@@ -367,13 +367,16 @@ def _fact_pedidos(gxe, qualified: Callable[[str], str]) -> list:
                 "WHERE p.id_coordinadora IS NOT NULL AND d.id_coordinadora IS NULL",
                 "Toda coordinadora informada en un pedido debe existir en dim_coordinadora.",
             ),
-            # Rangos de los montos.
+            # Rangos de los montos. Advertencias: en la ejecución del 22/11/2026
+            # hubo 2 pedidos con algún monto negativo y 1 cuyo monto a pagar no
+            # cuadra; son datos del origen que corresponde revisar con el negocio.
             _unexpected_rows(
                 gxe,
                 "SELECT id_pedido FROM {batch} "
                 "WHERE monto_total_pedido < 0 OR monto_comision < 0 "
                 "OR monto_envio < 0 OR monto_pagado < 0",
                 "Los montos de un pedido no son negativos.",
+                warning=True,
             ),
             # Tolerancia de un céntimo por redondeo.
             _unexpected_rows(
@@ -381,6 +384,7 @@ def _fact_pedidos(gxe, qualified: Callable[[str], str]) -> list:
                 "SELECT id_pedido FROM {batch} "
                 "WHERE ABS(monto_pagado - (monto_total_pedido - monto_comision + monto_envio)) > 0.01",
                 "El monto a pagar es el de catálogo menos la comisión más el envío.",
+                warning=True,
             ),
             _unexpected_rows(
                 gxe,

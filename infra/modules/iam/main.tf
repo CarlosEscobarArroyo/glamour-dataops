@@ -28,6 +28,8 @@ locals {
     "deploy-run"           = { cuenta = "deploy", rol = "roles/run.developer" }
     "deploy-workflows"     = { cuenta = "deploy", rol = "roles/workflows.editor" }
     "deploy-bigquery"      = { cuenta = "deploy", rol = "roles/bigquery.jobUser" }
+    # Great Expectations lee los resultados grandes con la API de lectura de BigQuery.
+    "calidad-readsession" = { cuenta = "quality", rol = "roles/bigquery.readSessionUser" }
   }
 }
 

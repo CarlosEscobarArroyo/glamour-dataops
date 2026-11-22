@@ -34,6 +34,7 @@ y `backend.tf`.
 | `sa-extraction-<ambiente>` | Crear objetos (no borrar ni sobrescribir) | Bucket landing |
 | | Leer el valor | Secretos `MYSQL_HOST` y `MYSQL_PASSWORD` |
 | `sa-quality-<ambiente>` | Leer tablas y ejecutar consultas | Datasets `bq_staging` y `bq_validation` |
+| | Leer resultados grandes con la API de lectura de BigQuery | Proyecto (`roles/bigquery.readSessionUser`) |
 | | Escribir Data Docs | Bucket de Data Docs |
 | `sa-workflows-<ambiente>` | Ejecutar los Jobs y consultar su estado | Proyecto (los Jobs los crea el CI) |
 | | Leer Parquet | Bucket landing |
