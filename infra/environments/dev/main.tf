@@ -142,3 +142,20 @@ module "openmetadata" {
   network_id = module.vpc.network_id
   subnet_id  = module.vpc.subnet_id
 }
+
+# API key de Datadog para monitorear OpenMetadata. Va en su propio módulo para que
+# solo la VM pueda leerla (el módulo da acceso a todos los secretos de la lista).
+module "secrets_datadog" {
+  count   = var.openmetadata ? 1 : 0
+  source  = "../../modules/secrets"
+  nombres = ["datadog-openmetadata-dev-api-key"]
+  lectores = {
+    openmetadata = module.openmetadata[0].member
+  }
+}
+
+# El secreto se creó a mano con gcloud; este bloque lo adopta sin recrearlo.
+import {
+  to = module.secrets_datadog[0].google_secret_manager_secret.secreto["datadog-openmetadata-dev-api-key"]
+  id = "projects/${var.project_id}/secrets/datadog-openmetadata-dev-api-key"
+}
