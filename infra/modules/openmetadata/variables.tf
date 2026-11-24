@@ -22,6 +22,12 @@ variable "subnet_id" {
   type = string
 }
 
+variable "acceso_web_publico" {
+  description = "Permite acceso público al puerto HTTP de OpenMetadata."
+  type        = bool
+  default     = true
+}
+
 variable "tipo_maquina" {
   description = "El mínimo de OpenMetadata es 4 vCPU y 6 GB de RAM."
   type        = string

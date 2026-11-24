@@ -1,6 +1,5 @@
 # VM para OpenMetadata. Terraform solo crea la máquina; Docker y OpenMetadata se
-# instalan a mano por SSH. La interfaz (puerto 8585) queda abierta a internet en una
-# IP fija; el SSH solo entra a través de IAP.
+# instalan a mano por SSH. El acceso SSH entra a través de IAP.
 
 resource "google_service_account" "vm" {
   account_id   = "sa-openmetadata-${var.ambiente}"
@@ -63,9 +62,14 @@ resource "google_compute_firewall" "ssh_iap" {
   }
 }
 
-# Interfaz web abierta a todo internet, por HTTP. Cambiar la contraseña del usuario
-# admin apenas se instale OpenMetadata.
+moved {
+  from = google_compute_firewall.web
+  to   = google_compute_firewall.web[0]
+}
+
+# Acceso HTTP directo para los entornos que conservan la regla pública.
 resource "google_compute_firewall" "web" {
+  count         = var.acceso_web_publico ? 1 : 0
   name          = "${var.prefijo}-fw-openmetadata-web"
   network       = var.network_id
   source_ranges = ["0.0.0.0/0"]
