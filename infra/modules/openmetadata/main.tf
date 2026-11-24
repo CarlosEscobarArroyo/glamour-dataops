@@ -42,7 +42,11 @@ resource "google_compute_instance" "vm" {
 
   lifecycle {
     # Una imagen nueva de Ubuntu no debe recrear la VM.
-    ignore_changes = [boot_disk[0].initialize_params[0].image]
+    # Las claves SSH se gestionan fuera de Terraform.
+    ignore_changes = [
+      boot_disk[0].initialize_params[0].image,
+      metadata["ssh-keys"],
+    ]
   }
 }
 
