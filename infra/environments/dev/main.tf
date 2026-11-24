@@ -141,7 +141,7 @@ module "openmetadata" {
   zona               = "${var.region}-b"
   network_id         = module.vpc.network_id
   subnet_id          = module.vpc.subnet_id
-  acceso_web_publico = false
+  acceso_web_publico = true
 }
 
 # API key de Datadog para monitorear OpenMetadata. Va en su propio módulo para que
