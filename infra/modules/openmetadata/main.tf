@@ -41,8 +41,10 @@ resource "google_compute_instance" "vm" {
   allow_stopping_for_update = true
 
   lifecycle {
-    # Una imagen nueva de Ubuntu no debe recrear la VM.
-    ignore_changes = [boot_disk[0].initialize_params[0].image]
+    ignore_changes = [
+      boot_disk[0].initialize_params[0].image, # Una imagen nueva de Ubuntu no debe recrear la VM.
+      metadata["ssh-keys"],                   # Las claves SSH se gestionan fuera de Terraform.
+    ]
   }
 }
 
