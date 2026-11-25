@@ -1,0 +1,70 @@
+name: Orquestación
+
+# Publica en Cloud Workflows la definición del pipeline
+# (src/orchestration/workflow_comercial.yaml). Terraform crea el workflow con su cuenta
+# y sus variables; aquí solo se actualiza su contenido.
+# Pull request: valida el YAML. Push a dev o main: además lo publica
+# (dev -> proyecto dev; main -> prd, con aprobación).
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths: ["src/orchestration/**", ".github/workflows/orchestration.yml"]
+  push:
+    branches: [dev, main]
+    paths: ["src/orchestration/**", ".github/workflows/orchestration.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Workload Identity Federation (sin llaves JSON)
+
+env:
+  DEFINICION: src/orchestration/workflow_comercial.yaml
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Validar el YAML
+        run: |
+          python -m pip install pyyaml
+          python -c "import sys, yaml; yaml.safe_load(open(sys.argv[1]))" "$DEFINICION"
+
+  publicar:
+    needs: validar
+    if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # El environment "prd" tiene revisores obligatorios: la publicación espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
+    concurrency: orchestration-${{ github.ref_name }}
+    env:
+      # Variables del environment de GitHub (dev o prd).
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      REGION: ${{ vars.REGION }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Publicar el workflow
+        run: |
+          : "${PROJECT_ID:?Falta la variable PROJECT_ID del environment}"
+          : "${REGION:?Falta la variable REGION del environment}"
+          workflow="${PROJECT_ID}-wf-pipeline"
+          # El workflow lo crea Terraform, con su cuenta de servicio y sus variables.
+          # Si no existe, "deploy" lo crearía sin ellas: mejor fallar.
+          if ! gcloud workflows describe "$workflow" --location "$REGION" --project "$PROJECT_ID" > /dev/null; then
+            echo "::error::No existe el workflow ${workflow}: aplicar Terraform primero"
+            exit 1
+          fi
+          # Con solo --source, deploy reemplaza el contenido y conserva lo demás.
+          gcloud workflows deploy "$workflow" --source "$DEFINICION" --location "$REGION" --project "$PROJECT_ID"

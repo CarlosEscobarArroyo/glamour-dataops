@@ -18,7 +18,7 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
 
 ## 2. Arquitectura del Flujo Operativo
 
-![Arquitectura DataOps Glamour Perú](./docs/GlamourDataOpsDiagrama-TO-BE.drawio.svg)
+![Arquitectura DataOps Glamour Perú](./docs/Arquitectura.drawio.svg)
 
 
 1. **Cloud Scheduler (05:00 AM):** Dispara automáticamente el inicio del flujo diario sin intervención manual.
@@ -26,32 +26,52 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
    * **Paso 1 — Cloud Run Job: Extractor (Python + Cloud NAT IP Fija):**
      * Extrae datos desde MariaDB utilizando una IP estática autorizada.
      * Guarda respaldo inmutable (`.parquet`) en Cloud Storage (*Landing Zone*).
-     * Carga tablas crudas en el primer dataset de BigQuery (*Capa Staging*).
-   * **Paso 2 — Cloud Run Job: Data Quality (Great Expectations):**
-     * Evalúa reglas de completitud, unicidad, integridad referencial y rangos válidos sobre la *Capa Staging*.
-     * Si alguna validación falla, **Cloud Workflows detiene el pipeline** y envía alerta inmediata hacia **Datadog**.
-   * **Paso 3 — BigQuery Stored Procedures / SQL:**
-     * Únicamente si las pruebas de calidad son exitosas, transforma y consolida los datos desde *Staging* hacia el segundo dataset de BigQuery (*Modelo Dimensional*).
+   * **Carga a Staging (load jobs de BigQuery, lanzados por el propio Workflow):**
+     * Carga los `.parquet` de esa extracción como tablas crudas en el primer dataset de BigQuery (*Capa Staging*).
+   * **Paso 2 — BigQuery Stored Procedures / SQL:**
+     * Construye el modelo candidato desde *Staging* en `bq_validation`, sin modificar todavía el modelo publicado.
+   * **Paso 3 — Cloud Run Job: Data Quality (Great Expectations):**
+     * Evalúa completitud, unicidad, integridad referencial y rangos válidos sobre el modelo candidato.
+     * Si alguna regla crítica falla, **Cloud Workflows detiene el pipeline** y conserva la última versión publicada. Las advertencias (defectos conocidos del origen) quedan en el reporte sin detenerlo.
+     * Publica el reporte en *Data Docs* (`gs://<proyecto>-cs-data-docs/runs/<run_id>/`).
+   * **Publicación controlada:**
+     * Únicamente si las pruebas de calidad son exitosas, copia `bq_validation` al modelo dimensional que consume Looker Studio.
 3. **Looker Studio:** Consulta exclusivamente las tablas validadas del *Modelo Dimensional* para la gerencia y las coordinadoras.
 
 ---
 
 ## 3. Estructura del Monorepo
 
+Cada contenedor agrupa su código y dependencias en una carpeta dentro de `src/`.
+Sus pruebas viven en `tests/`, que replica la estructura de `src/`.
+
+Guía del primer contenedor: [extracción de MariaDB a GCS](./src/extraction/README.md).
+Convención de publicación: [imágenes de los Jobs en Artifact Registry](./docs/artifact_registry.md).
+El workflow [Deploy Jobs](./.github/workflows/deploy-jobs.yml) ejecuta las pruebas del componente
+que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `main` publica su imagen y
+despliega su Job. El workflow [Orquestación](./.github/workflows/orchestration.yml)
+publica la definición del flujo de Cloud Workflows cuando cambia `src/orchestration/`.
+El Job de calidad se despliega con el mismo CI y el workflow lo ejecuta antes de
+publicar el modelo. Gobierno aún no está implementado.
+
 * **`.github/workflows/`** — Pipelines CI/CD (GitHub Actions)
-  * `ci-tests-lint.yml`: Pruebas unitarias Python, validación SQL y formato de Terraform.
-  * `cd-terraform.yml`: Despliegue de infraestructura en GCP (`dev` / `prod`).
-  * `cd-containers.yml`: Construcción y publicación de imágenes Docker en Artifact Registry.
+  * `deploy-jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
+  * `orchestration.yml`: Valida y publica la definición del workflow de Cloud Workflows.
+  * `transformation.yml`: Publica el SQL de `src/transformation/` como procedimientos de BigQuery y carga `ref_ubigeo.csv`.
+  * `terraform.yml`: Validación, plan y despliegue de la infraestructura en GCP (`dev` / `prd`).
 * **`infra/`** — Infraestructura como Código (Terraform)
   * `modules/`: Módulos reutilizables (`storage`, `bigquery`, `cloud_run`, `iam`, `vpc`).
   * `environments/dev/`: Configuración del entorno `glamour-dataops-dev`.
-  * `environments/prod/`: Configuración del entorno `glamour-dataops-prod`.
+  * `environments/prd/`: Configuración del entorno `glamour-dataops-prd`.
 * **`src/`** — Código fuente del pipeline
-  * `extraction/`: Contenedor 1 — Cloud Run Job de extracción en Python.
-  * `quality/`: Contenedor 2 — Cloud Run Job de calidad con Great Expectations.
-  * `transformation/`: Consultas y modelado en BigQuery.
-* **`orchestration/`** — Definición del orquestador
-  * `workflow_comercial.yaml`: Flujo declarativo de Google Cloud Workflows.
+  * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
+  * [`quality/`](./src/quality/README.md): Contenedor 2 — Cloud Run Job de calidad con Great Expectations. Tiene contratos para las once tablas y reglas profundas para el piloto; el workflow lo ejecuta antes de publicar.
+  * `transformation/`: Modelo dimensional en SQL. Un archivo por tabla (dimensiones y hechos) y `ref_ubigeo.csv`, la tabla de referencia de ubicaciones.
+  * `orchestration/`: Definición del orquestador. `workflow_comercial.yaml` es el flujo de Google Cloud Workflows: extracción, carga a Staging, construcción del modelo dimensional, validación de calidad y publicación.
+* **`tests/`** — Pruebas, con la misma estructura que `src/`
+  * `extraction/`: Pruebas unitarias del extractor.
+  * `quality/`: Pruebas unitarias de configuración, contratos, resultados y publicación de Data Docs, sin acceder a GCP.
+  * `transformation/`: Pruebas de los archivos SQL y de `ref_ubigeo.csv`, sin acceder a BigQuery.
 * **`governance/`** — Documentación base y configuración de OpenMetadata
   * `data_dictionary.md`: Diccionario de datos de tablas y columnas.
   * `metrics_glossary.md`: Definición oficial de indicadores comerciales (ej. Ventas).
@@ -91,7 +111,86 @@ Automatizar y gobernar el flujo de datos comerciales desde la base de datos tran
 3. Definir el proyecto activo de desarrollo:
    `gcloud config set project glamour-dataops-dev`
 
-[TBD]
+Para correr las pruebas del extractor, consultar la
+[guía de extracción](./src/extraction/README.md). El extractor no se ejecuta en
+local: se valida con sus pruebas y ejecutando el Job en dev.
+
+---
+
+## 6. Gestión de la Configuración
+
+Diseño acordado para variables de entorno, secretos y valores por ambiente.
+Describe el estado objetivo; su implementación está pendiente.
+
+**Principio:** cada valor vive en un solo lugar, y ese lugar depende del tipo de
+valor. El código de los componentes solo lee variables de entorno.
+
+### Dónde vive cada tipo de valor
+
+| Tipo | Ejemplos | Dónde vive |
+| :--- | :--- | :--- |
+| Identidad del ambiente | Proyecto, región | Variables de GitHub por ambiente (para el CI) y `terraform.tfvars` (para la plataforma) |
+| Referencias a recursos | Bucket landing, cuenta de servicio, red | `job.yaml`, formadas a partir del proyecto (`${PROJECT_ID}-cs-landing`) |
+| Secretos | `MYSQL_HOST`, `MYSQL_PASSWORD` | Valor en Secret Manager; referencia en `job.yaml`; Cloud Run los inyecta como variables de entorno |
+| Datos de conexión no secretos | Puerto, base y usuario de MariaDB | `job.yaml`, escritos directamente: son iguales en dev y prd |
+| Políticas del ambiente | Retención, scheduler pausado, protección contra borrado | `terraform.tfvars` |
+| Dimensionamiento del Job | CPU, memoria, timeout, reintentos | `job.yaml` |
+| Parámetros de operación | Tamaño de lote, timeouts de conexión | Constante en el código; pasa a variable en `job.yaml` solo si un ambiente necesita otro valor |
+| Reglas del pipeline | Lista de tablas, formato, rutas, expectativas, SQL | Código |
+| Identidad de despliegue | Proveedor y cuenta para autenticar GitHub contra GCP | Variables de GitHub por ambiente |
+
+### Quién es dueño de qué
+
+* **Terraform:** la plataforma. Proyecto, red, cuentas de servicio y permisos, buckets, datasets, secretos vacíos, Artifact Registry, y el workflow (su cuenta y sus variables, no su contenido) y el scheduler.
+* **CI de transformación:** el modelo dimensional. Guarda cada `.sql` de `src/transformation/` como procedimiento almacenado en `bq_validation` y carga `ref_ubigeo.csv` en `bq_staging`.
+* **CI de orquestación:** el contenido del workflow. Publica `src/orchestration/workflow_comercial.yaml` con `gcloud workflows deploy` cuando cambia.
+* **CI de los Jobs:** cada Cloud Run Job completo. Un único workflow detecta qué componente de `src/` cambió y, para ese componente, ejecuta las pruebas, construye y publica la imagen, rellena los marcadores de `job.yaml` y lo aplica con `gcloud run jobs replace`. Falla si queda un marcador sin resolver.
+* **Ramas:** `dev` despliega al proyecto dev; `main` despliega a prd con aprobación.
+
+### Archivos de un componente
+
+Cada componente tiene en `src/<componente>/` su código, su `Dockerfile` y un
+`job.yaml` que define el Job: imagen, variables de entorno, referencias a secretos,
+recursos, cuenta de servicio y red. El mismo archivo sirve para dev y prd; solo
+cambian los marcadores. Las pruebas viven en `tests/<componente>/`, en una carpeta
+`tests/` de la raíz que replica la estructura de `src/`.
+
+Para el extractor:
+
+| Lugar | Contenido |
+| :--- | :--- |
+| `src/extraction/extract.py` | Lee `GCS_BUCKET` y las cinco `MYSQL_*`. Nombra en el log las que falten y la causa de un fallo de conexión |
+| `src/extraction/job.yaml` | Imagen, las seis variables del contenedor (cuatro con valor y dos secretos), recursos, cuenta de servicio y red |
+| `tests/extraction/` | Pruebas unitarias |
+| `.github/workflows/deploy-jobs.yml` | Pruebas, imagen y despliegue |
+| Secret Manager de cada proyecto | Valores de `MYSQL_HOST` y `MYSQL_PASSWORD` |
+
+`config_dev.json` desaparece. La ejecución local queda fuera de alcance: el
+extractor se valida con las pruebas unitarias y ejecutando el Job en dev.
+
+### Variables de GitHub
+
+Cuatro por ambiente (`dev` y `prd`), compartidas por todos los componentes:
+`PROJECT_ID`, `REGION`, `WIF_PROVIDER` (proveedor de identidad) y `DEPLOY_SA`
+(cuenta de despliegue).
+Solo se agrega otra cuando un valor difiere entre ambientes y no puede formarse
+a partir del proyecto.
+
+### Qué tocar según el cambio
+
+| Cambio | Dónde |
+| :--- | :--- |
+| Lógica o valor por defecto | Código |
+| Memoria, timeout, una variable distinta por ambiente | `job.yaml` |
+| Contraseña u otro secreto | Secret Manager, sin desplegar |
+| Pasos del pipeline | `src/orchestration/workflow_comercial.yaml` |
+| Lógica de una dimensión o tabla de hechos | Su archivo en `src/transformation/` |
+| Ubicación de un distrito | `src/transformation/ref_ubigeo.csv` |
+| Recurso o permiso nuevo, política del ambiente | Terraform |
+
+### Pendiente de decidir
+
+Imagen de prd: reconstruirla al hacer merge a `main` o copiar la validada en dev.
 
 ---
 

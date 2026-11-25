@@ -1,0 +1,31 @@
+# Definición del Cloud Run Job de calidad. El CI reemplaza ${PROJECT_ID},
+# ${AMBIENTE}, ${REGION} e ${IMAGE} con los valores del ambiente y aplica el archivo con
+#   gcloud run jobs replace job.yaml --region <región>
+# El mismo archivo sirve para dev y prod. No se incluye en la imagen.
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: ${PROJECT_ID}-crj-quality
+spec:
+  template:
+    spec:
+      taskCount: 1
+      template:
+        spec:
+          serviceAccountName: sa-quality-${AMBIENTE}@${PROJECT_ID}.iam.gserviceaccount.com
+          # Una validación rechazada no cambia si se repite sobre los mismos datos.
+          maxRetries: 0
+          timeoutSeconds: 1800
+          containers:
+            - image: ${IMAGE}
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: 2Gi
+              env:
+                - name: GCP_PROJECT
+                  value: ${PROJECT_ID}
+                - name: BQ_DATASET
+                  value: bq_validation
+                - name: DATA_DOCS_BUCKET
+                  value: ${PROJECT_ID}-cs-data-docs

@@ -1,0 +1,6 @@
+# Flujo provisional con el que Terraform crea el workflow. El CI lo reemplaza por
+# src/orchestration/workflow_comercial.yaml.
+main:
+  steps:
+    - pendiente:
+        return: "Falta src/orchestration/workflow_comercial.yaml"

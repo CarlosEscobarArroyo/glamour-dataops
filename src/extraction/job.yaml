@@ -1,0 +1,52 @@
+# Definición del Cloud Run Job de extracción. El CI reemplaza ${PROJECT_ID},
+# ${AMBIENTE}, ${REGION} e ${IMAGE} con los valores del ambiente y aplica el archivo con
+#   gcloud run jobs replace job.yaml --region <región>
+# El mismo archivo sirve para dev y prd. No se incluye en la imagen.
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: ${PROJECT_ID}-crj-extraction
+spec:
+  template:
+    metadata:
+      annotations:
+        # Todo el tráfico sale por la VPC: Cloud NAT con la IP fija autorizada en MariaDB.
+        run.googleapis.com/vpc-access-egress: all-traffic
+        run.googleapis.com/network-interfaces: '[{"network":"${PROJECT_ID}-vpc","subnetwork":"${PROJECT_ID}-snet-${REGION}"}]'
+    spec:
+      taskCount: 1  # el extractor no reparte tablas entre tareas
+      template:
+        spec:
+          serviceAccountName: sa-extraction-${AMBIENTE}@${PROJECT_ID}.iam.gserviceaccount.com
+          # Sin reintentos aquí: los hace el workflow, con una carpeta nueva por
+          # intento. Un reintento del Job reusaría RUN_PREFIX y fallaría, porque
+          # el extractor no sobrescribe archivos.
+          maxRetries: 0
+          timeoutSeconds: 3600
+          containers:
+            - image: ${IMAGE}
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: 4Gi
+              env:
+                - name: GCS_BUCKET
+                  value: ${PROJECT_ID}-cs-landing
+                # Dev y prd leen la misma MariaDB: puerto, base y usuario van escritos aquí.
+                # El host y la contraseña son secretos de Secret Manager del proyecto.
+                - name: MYSQL_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: MYSQL_HOST
+                      key: latest
+                - name: MYSQL_PORT
+                  value: "3306"
+                - name: MYSQL_DATABASE
+                  value: pgjrtiux_intranet
+                - name: MYSQL_USER
+                  value: pgjrtiux
+                - name: MYSQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: MYSQL_PASSWORD
+                      key: latest  # versión

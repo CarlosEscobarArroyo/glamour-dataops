@@ -1,0 +1,84 @@
+name: Transformación
+
+# Publica en BigQuery el modelo dimensional de src/transformation/:
+#   - Cada archivo .sql se guarda como un procedimiento almacenado
+#     (bq_validation.sp_<archivo>), que el workflow del pipeline ejecuta a diario.
+#   - Los archivos fn_*.sql son funciones compartidas por esos procedimientos.
+#   - ref_ubigeo.csv se carga como la tabla de referencia bq_staging.ref_ubigeo.
+# Pull request: pruebas, sin acceder a GCP. Push a dev o main: además publica
+# (dev -> proyecto dev; main -> prd, con aprobación).
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths: ["src/transformation/**", "tests/transformation/**", ".github/workflows/transformation.yml"]
+  push:
+    branches: [dev, main]
+    paths: ["src/transformation/**", "tests/transformation/**", ".github/workflows/transformation.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Workload Identity Federation (sin llaves JSON)
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Ejecutar pruebas
+        run: python -B -m unittest discover -s tests/transformation -v
+
+  publicar:
+    needs: pruebas
+    if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # El environment "prd" tiene revisores obligatorios: la publicación espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
+    concurrency: transformation-${{ github.ref_name }}
+    env:
+      # Variable del environment de GitHub (dev o prd).
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Cargar la tabla de referencia de ubigeos
+        run: |
+          : "${PROJECT_ID:?Falta la variable PROJECT_ID del environment}"
+          # Reemplaza la tabla completa con el contenido del archivo.
+          bq load --project_id="$PROJECT_ID" --source_format=CSV --skip_leading_rows=1 --replace \
+            bq_staging.ref_ubigeo src/transformation/ref_ubigeo.csv \
+            id_ubigeo:STRING,distrito:STRING,provincia:STRING,departamento:STRING,ubigeo_inei:STRING,observacion:STRING
+      - name: Publicar las funciones
+        run: |
+          # Los archivos fn_*.sql definen funciones que usan los procedimientos:
+          # se publican primero y tal cual están escritos.
+          for archivo in src/transformation/fn_*.sql; do
+            echo "Publicando $(basename "$archivo")"
+            bq query --project_id="$PROJECT_ID" --use_legacy_sql=false --quiet < "$archivo"
+          done
+      - name: Publicar los procedimientos
+        run: |
+          for archivo in src/transformation/*.sql; do
+            tabla=$(basename "$archivo" .sql)
+            case "$tabla" in fn_*) continue ;; esac
+            echo "Publicando bq_validation.sp_${tabla}"
+            # strict_mode = FALSE: al crear el procedimiento no se exige que ya existan
+            # las tablas que lee, porque algunas las crea otro procedimiento.
+            {
+              echo "CREATE OR REPLACE PROCEDURE bq_validation.sp_${tabla}()"
+              echo "OPTIONS (strict_mode = FALSE)"
+              echo "BEGIN"
+              cat "$archivo"
+              echo "END;"
+            } | bq query --project_id="$PROJECT_ID" --use_legacy_sql=false --quiet
+          done
