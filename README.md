@@ -58,11 +58,11 @@ publicar el modelo. Gobierno aún no está implementado.
   * `deploy-jobs.yml`: Workflow único de los Cloud Run Jobs: pruebas, imagen y despliegue del componente que cambió.
   * `orchestration.yml`: Valida y publica la definición del workflow de Cloud Workflows.
   * `transformation.yml`: Publica el SQL de `src/transformation/` como procedimientos de BigQuery y carga `ref_ubigeo.csv`.
-  * `terraform.yml`: Validación, plan y despliegue de la infraestructura en GCP (`dev` / `prod`).
+  * `terraform.yml`: Validación, plan y despliegue de la infraestructura en GCP (`dev` / `prd`).
 * **`infra/`** — Infraestructura como Código (Terraform)
   * `modules/`: Módulos reutilizables (`storage`, `bigquery`, `cloud_run`, `iam`, `vpc`).
   * `environments/dev/`: Configuración del entorno `glamour-dataops-dev`.
-  * `environments/prod/`: Configuración del entorno `glamour-dataops-prod`.
+  * `environments/prd/`: Configuración del entorno `glamour-dataops-prd`.
 * **`src/`** — Código fuente del pipeline
   * [`extraction/`](./src/extraction/README.md): Contenedor 1 — Cloud Run Job de extracción en Python. MariaDB → Parquet en GCS.
   * [`quality/`](./src/quality/README.md): Contenedor 2 — Cloud Run Job de calidad con Great Expectations. Tiene contratos para las once tablas y reglas profundas para el piloto; el workflow lo ejecuta antes de publicar.
@@ -132,7 +132,7 @@ valor. El código de los componentes solo lee variables de entorno.
 | Identidad del ambiente | Proyecto, región | Variables de GitHub por ambiente (para el CI) y `terraform.tfvars` (para la plataforma) |
 | Referencias a recursos | Bucket landing, cuenta de servicio, red | `job.yaml`, formadas a partir del proyecto (`${PROJECT_ID}-cs-landing`) |
 | Secretos | `MYSQL_HOST`, `MYSQL_PASSWORD` | Valor en Secret Manager; referencia en `job.yaml`; Cloud Run los inyecta como variables de entorno |
-| Datos de conexión no secretos | Puerto, base y usuario de MariaDB | `job.yaml`, escritos directamente: son iguales en dev y prod |
+| Datos de conexión no secretos | Puerto, base y usuario de MariaDB | `job.yaml`, escritos directamente: son iguales en dev y prd |
 | Políticas del ambiente | Retención, scheduler pausado, protección contra borrado | `terraform.tfvars` |
 | Dimensionamiento del Job | CPU, memoria, timeout, reintentos | `job.yaml` |
 | Parámetros de operación | Tamaño de lote, timeouts de conexión | Constante en el código; pasa a variable en `job.yaml` solo si un ambiente necesita otro valor |
@@ -145,13 +145,13 @@ valor. El código de los componentes solo lee variables de entorno.
 * **CI de transformación:** el modelo dimensional. Guarda cada `.sql` de `src/transformation/` como procedimiento almacenado en `bq_validation` y carga `ref_ubigeo.csv` en `bq_staging`.
 * **CI de orquestación:** el contenido del workflow. Publica `src/orchestration/workflow_comercial.yaml` con `gcloud workflows deploy` cuando cambia.
 * **CI de los Jobs:** cada Cloud Run Job completo. Un único workflow detecta qué componente de `src/` cambió y, para ese componente, ejecuta las pruebas, construye y publica la imagen, rellena los marcadores de `job.yaml` y lo aplica con `gcloud run jobs replace`. Falla si queda un marcador sin resolver.
-* **Ramas:** `dev` despliega al proyecto dev; `main` despliega a prod con aprobación.
+* **Ramas:** `dev` despliega al proyecto dev; `main` despliega a prd con aprobación.
 
 ### Archivos de un componente
 
 Cada componente tiene en `src/<componente>/` su código, su `Dockerfile` y un
 `job.yaml` que define el Job: imagen, variables de entorno, referencias a secretos,
-recursos, cuenta de servicio y red. El mismo archivo sirve para dev y prod; solo
+recursos, cuenta de servicio y red. El mismo archivo sirve para dev y prd; solo
 cambian los marcadores. Las pruebas viven en `tests/<componente>/`, en una carpeta
 `tests/` de la raíz que replica la estructura de `src/`.
 
@@ -170,7 +170,7 @@ extractor se valida con las pruebas unitarias y ejecutando el Job en dev.
 
 ### Variables de GitHub
 
-Cuatro por ambiente (`dev` y `prod`), compartidas por todos los componentes:
+Cuatro por ambiente (`dev` y `prd`), compartidas por todos los componentes:
 `PROJECT_ID`, `REGION`, `WIF_PROVIDER` (proveedor de identidad) y `DEPLOY_SA`
 (cuenta de despliegue).
 Solo se agrega otra cuando un valor difiere entre ambientes y no puede formarse
@@ -190,7 +190,7 @@ a partir del proyecto.
 
 ### Pendiente de decidir
 
-Imagen de prod: reconstruirla al hacer merge a `main` o copiar la validada en dev.
+Imagen de prd: reconstruirla al hacer merge a `main` o copiar la validada en dev.
 
 ---
 

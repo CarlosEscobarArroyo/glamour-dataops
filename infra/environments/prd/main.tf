@@ -1,4 +1,4 @@
-# Plataforma DataOps de Glamour Perú. Este archivo es igual en dev y prod:
+# Plataforma DataOps de Glamour Perú. Este archivo es igual en dev y prd:
 # lo que cambia entre entornos está en terraform.tfvars y backend.tf.
 
 locals {

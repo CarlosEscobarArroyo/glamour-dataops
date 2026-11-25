@@ -4,7 +4,7 @@ name: Orquestación
 # (src/orchestration/workflow_comercial.yaml). Terraform crea el workflow con su cuenta
 # y sus variables; aquí solo se actualiza su contenido.
 # Pull request: valida el YAML. Push a dev o main: además lo publica
-# (dev -> proyecto dev; main -> prod, con aprobación).
+# (dev -> proyecto dev; main -> prd, con aprobación).
 
 on:
   pull_request:
@@ -41,11 +41,11 @@ jobs:
     if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # El environment "prod" tiene revisores obligatorios: la publicación espera aprobación.
-    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    # El environment "prd" tiene revisores obligatorios: la publicación espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
     concurrency: orchestration-${{ github.ref_name }}
     env:
-      # Variables del environment de GitHub (dev o prod).
+      # Variables del environment de GitHub (dev o prd).
       PROJECT_ID: ${{ vars.PROJECT_ID }}
       REGION: ${{ vars.REGION }}
     steps:

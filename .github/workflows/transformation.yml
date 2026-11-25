@@ -6,7 +6,7 @@ name: Transformación
 #   - Los archivos fn_*.sql son funciones compartidas por esos procedimientos.
 #   - ref_ubigeo.csv se carga como la tabla de referencia bq_staging.ref_ubigeo.
 # Pull request: pruebas, sin acceder a GCP. Push a dev o main: además publica
-# (dev -> proyecto dev; main -> prod, con aprobación).
+# (dev -> proyecto dev; main -> prd, con aprobación).
 
 on:
   pull_request:
@@ -38,11 +38,11 @@ jobs:
     if: github.event_name != 'pull_request' && (github.ref_name == 'dev' || github.ref_name == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # El environment "prod" tiene revisores obligatorios: la publicación espera aprobación.
-    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    # El environment "prd" tiene revisores obligatorios: la publicación espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
     concurrency: transformation-${{ github.ref_name }}
     env:
-      # Variable del environment de GitHub (dev o prod).
+      # Variable del environment de GitHub (dev o prd).
       PROJECT_ID: ${{ vars.PROJECT_ID }}
     steps:
       - uses: actions/checkout@v7

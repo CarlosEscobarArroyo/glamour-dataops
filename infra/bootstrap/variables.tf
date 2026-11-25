@@ -1,5 +1,5 @@
 variable "project_id" {
-  description = "Proyecto de GCP (glamour-dataops-dev o glamour-dataops-prod)."
+  description = "Proyecto de GCP (glamour-dataops-dev o glamour-dataops-prd)."
   type        = string
 }
 

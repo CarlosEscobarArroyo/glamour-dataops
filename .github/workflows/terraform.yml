@@ -1,7 +1,7 @@
 name: Terraform
 
-# Rama dev -> proyecto glamour-dataops-dev; rama main -> glamour-dataops-prod.
-# Pull request: valida y muestra el plan. Push (merge): aplica; prod espera aprobación.
+# Rama dev -> proyecto glamour-dataops-dev; rama main -> glamour-dataops-prd.
+# Pull request: valida y muestra el plan. Push (merge): aplica; prd espera aprobación.
 
 on:
   pull_request:
@@ -23,7 +23,7 @@ permissions:
 env:
   TF_VERSION: "1.17.1"
   TF_IN_AUTOMATION: "true"
-  ENTORNO: ${{ (github.base_ref || github.ref_name) == 'main' && 'prod' || 'dev' }}
+  ENTORNO: ${{ (github.base_ref || github.ref_name) == 'main' && 'prd' || 'dev' }}
 
 jobs:
   validar:
@@ -40,9 +40,9 @@ jobs:
       - name: Formato
         run: terraform fmt -recursive -check infra
 
-      - name: Validar dev y prod
+      - name: Validar dev y prd
         run: |
-          for d in infra/environments/dev infra/environments/prod; do
+          for d in infra/environments/dev infra/environments/prd; do
             terraform -chdir=$d init -backend=false -input=false
             terraform -chdir=$d validate
           done
@@ -52,14 +52,14 @@ jobs:
     needs: validar
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    concurrency: terraform-${{ (github.base_ref || github.ref_name) == 'main' && 'prod' || 'dev' }}
+    concurrency: terraform-${{ (github.base_ref || github.ref_name) == 'main' && 'prd' || 'dev' }}
     steps:
       - uses: actions/checkout@v7
 
       - uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: ${{ vars[format('WIF_PROVIDER_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
-          service_account: ${{ vars[format('TF_SA_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
+          workload_identity_provider: ${{ vars[format('WIF_PROVIDER_{0}', env.ENTORNO == 'prd' && 'PRD' || 'DEV')] }}
+          service_account: ${{ vars[format('TF_SA_{0}', env.ENTORNO == 'prd' && 'PRD' || 'DEV')] }}
 
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -83,16 +83,16 @@ jobs:
     needs: validar
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # El environment "prod" tiene revisores obligatorios: el apply espera aprobación.
-    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-    concurrency: terraform-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    # El environment "prd" tiene revisores obligatorios: el apply espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
+    concurrency: terraform-${{ github.ref_name == 'main' && 'prd' || 'dev' }}
     steps:
       - uses: actions/checkout@v7
 
       - uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: ${{ vars[format('WIF_PROVIDER_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
-          service_account: ${{ vars[format('TF_SA_{0}', env.ENTORNO == 'prod' && 'PROD' || 'DEV')] }}
+          workload_identity_provider: ${{ vars[format('WIF_PROVIDER_{0}', env.ENTORNO == 'prd' && 'PRD' || 'DEV')] }}
+          service_account: ${{ vars[format('TF_SA_{0}', env.ENTORNO == 'prd' && 'PRD' || 'DEV')] }}
 
       - uses: hashicorp/setup-terraform@v4
         with:

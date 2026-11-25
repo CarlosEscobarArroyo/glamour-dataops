@@ -1,4 +1,4 @@
-# Se corre UNA vez por proyecto (dev y prod), a mano, con la cuenta de un integrante:
+# Se corre UNA vez por proyecto (dev y prd), a mano, con la cuenta de un integrante:
 #   terraform init
 #   terraform apply -var="project_id=glamour-dataops-dev"
 # Crea lo que el resto de Terraform necesita para correr desde GitHub Actions:

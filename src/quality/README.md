@@ -121,7 +121,7 @@ Cloud Logging le asigne el nivel:
 | `quality_finished` | `ERROR` si se rechazó, `WARNING` si pasó con advertencias, `INFO` si pasó limpio | Al terminar | `success`, `warnings`, `data_docs_prefix` (carpeta del reporte) |
 | `quality_error` | `ERROR` | Error técnico: no se pudo validar | `error_type`, `message` |
 
-Filtros de Cloud Logging para las alertas (dev; en prod cambia el proyecto):
+Filtros de Cloud Logging para las alertas (dev; en prd cambia el proyecto):
 
 ```text
 # Rechazo de calidad o error técnico del Job

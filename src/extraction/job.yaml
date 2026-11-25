@@ -1,7 +1,7 @@
 # Definición del Cloud Run Job de extracción. El CI reemplaza ${PROJECT_ID},
 # ${AMBIENTE}, ${REGION} e ${IMAGE} con los valores del ambiente y aplica el archivo con
 #   gcloud run jobs replace job.yaml --region <región>
-# El mismo archivo sirve para dev y prod. No se incluye en la imagen.
+# El mismo archivo sirve para dev y prd. No se incluye en la imagen.
 apiVersion: run.googleapis.com/v1
 kind: Job
 metadata:
@@ -32,7 +32,7 @@ spec:
               env:
                 - name: GCS_BUCKET
                   value: ${PROJECT_ID}-cs-landing
-                # Dev y prod leen la misma MariaDB: puerto, base y usuario van escritos aquí.
+                # Dev y prd leen la misma MariaDB: puerto, base y usuario van escritos aquí.
                 # El host y la contraseña son secretos de Secret Manager del proyecto.
                 - name: MYSQL_HOST
                   valueFrom:

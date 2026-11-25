@@ -21,10 +21,10 @@ infra/
 │   └── openmetadata/     VM para OpenMetadata con IP fija; interfaz pública, SSH por IAP.
 └── environments/
     ├── dev/              glamour-dataops-dev  (rama dev)
-    └── prod/             glamour-dataops-prod (rama main)
+    └── prd/             glamour-dataops-prd (rama main)
 ```
 
-`main.tf` es igual en `dev` y `prod`; lo que cambia está en `terraform.tfvars`
+`main.tf` es igual en `dev` y `prd`; lo que cambia está en `terraform.tfvars`
 y `backend.tf`.
 
 ## Cuentas de servicio
@@ -58,18 +58,18 @@ se dan a mano en la consola, no con Terraform.
    terraform apply -var="project_id=glamour-dataops-dev"
    ```
 
-   Su estado queda local (`terraform.tfstate`, ignorado por git). Para `prod`,
-   repetir en otra carpeta o con `terraform workspace new prod`.
+   Su estado queda local (`terraform.tfstate`, ignorado por git). Para `prd`,
+   repetir en otra carpeta o con `terraform workspace new prd`.
 
 2. En GitHub, *Settings > Secrets and variables > Actions > Variables*, crear a
    nivel de repositorio, con los outputs del paso 1:
 
    | Variable | Valor |
    | --- | --- |
-   | `WIF_PROVIDER_DEV` / `WIF_PROVIDER_PROD` | output `wif_provider` |
-   | `TF_SA_DEV` / `TF_SA_PROD` | output `terraform_sa_email` |
+   | `WIF_PROVIDER_DEV` / `WIF_PROVIDER_PRD` | output `wif_provider` |
+   | `TF_SA_DEV` / `TF_SA_PRD` | output `terraform_sa_email` |
 
-3. En *Settings > Environments*, crear `dev` y `prod`. A `prod` agregarle
+3. En *Settings > Environments*, crear `dev` y `prd`. A `prd` agregarle
    revisores obligatorios: así ningún `apply` ni despliegue llega a producción sin
    aprobación. En cada environment, crear las variables que usa
    [`deploy-jobs.yml`](../.github/workflows/deploy-jobs.yml):
@@ -110,7 +110,7 @@ se dan a mano en la consola, no con Terraform.
 | --- | --- |
 | Pull request a `dev` o `main` | `fmt`, `validate` y `plan`; el plan queda en el resumen del run |
 | Merge a `dev` | `apply` en `glamour-dataops-dev` |
-| Merge a `main` | `apply` en `glamour-dataops-prod`, después de la aprobación |
+| Merge a `main` | `apply` en `glamour-dataops-prd`, después de la aprobación |
 
 Se dispara con cambios en `infra/`.
 
@@ -167,7 +167,7 @@ El correo, los teléfonos, la contraseña, el DNI, el RUC y la dirección de
 - Bucket landing, datasets e IP del NAT con `prevent_destroy`: un `apply`
   equivocado no puede borrarlos.
 - Landing con política de retención: un Parquet no puede borrarse ni reemplazarse
-  antes de N días (1 en dev, 30 en prod).
+  antes de N días (1 en dev, 30 en prd).
 - Buckets con acceso público bloqueado y permisos solo por IAM.
 - Sin llaves JSON: GitHub Actions entra por Workload Identity Federation,
   limitado a este repositorio.

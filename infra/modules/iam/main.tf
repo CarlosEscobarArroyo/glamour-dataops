@@ -59,7 +59,7 @@ data "google_project" "actual" {
 }
 
 # Solo un job de GitHub Actions que corre en el environment de este ambiente (dev o
-# prod, este último con aprobación) puede actuar como sa-deploy. El pool wif-github
+# prd, este último con aprobación) puede actuar como sa-deploy. El pool wif-github
 # lo crea infra/bootstrap y ya limita los tokens a este repositorio.
 resource "google_service_account_iam_member" "deploy_github" {
   service_account_id = google_service_account.sa["deploy"].name

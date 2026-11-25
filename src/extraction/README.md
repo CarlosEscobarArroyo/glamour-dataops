@@ -41,7 +41,7 @@ seis son obligatorias y las define el Job en `job.yaml` (ver la
 | `MYSQL_PASSWORD` | Contraseña | Secret Manager, inyectada por Cloud Run |
 | `RUN_PREFIX` | Carpeta de destino dentro del bucket (opcional) | El workflow, al ejecutar el Job |
 
-Dev y prod leen la misma MariaDB, por lo que los datos de conexión son iguales
+Dev y prd leen la misma MariaDB, por lo que los datos de conexión son iguales
 en ambos ambientes; el host y la contraseña son secretos. Si falta alguna variable o
 está vacía, el proceso termina antes de conectarse y el log las nombra.
 

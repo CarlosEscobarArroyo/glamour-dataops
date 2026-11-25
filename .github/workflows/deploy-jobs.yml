@@ -3,7 +3,7 @@ name: Deploy Jobs
 # Un solo workflow para todos los Cloud Run Jobs. Un componente es una carpeta de
 # src/ con Dockerfile y job.yaml; sus pruebas están en tests/<misma carpeta>/.
 # Pull request: pruebas del componente que cambió. Push a dev o main: además publica
-# la imagen y despliega el Job (dev -> proyecto dev; main -> prod, con aprobación).
+# la imagen y despliega el Job (dev -> proyecto dev; main -> prd, con aprobación).
 # Al agregar un Job nuevo, sumar su carpeta de src/ y de tests/ a los dos "paths".
 
 on:
@@ -88,13 +88,13 @@ jobs:
       fail-fast: false
       matrix:
         componente: ${{ fromJSON(needs.detectar.outputs.componentes) }}
-    # El environment "prod" tiene revisores obligatorios: el despliegue espera aprobación.
-    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    # El environment "prd" tiene revisores obligatorios: el despliegue espera aprobación.
+    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
     concurrency: jobs-${{ matrix.componente }}-${{ github.ref_name }}
     env:
       COMPONENTE: ${{ matrix.componente }}
-      AMBIENTE: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-      # Variables del environment de GitHub (dev o prod).
+      AMBIENTE: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
+      # Variables del environment de GitHub (dev o prd).
       PROJECT_ID: ${{ vars.PROJECT_ID }}
       REGION: ${{ vars.REGION }}
     steps:
