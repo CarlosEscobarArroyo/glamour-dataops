@@ -1,7 +1,9 @@
+# Datadog lee las métricas del proyecto con esta cuenta, sin llaves: la cuenta de
+# Datadog (la misma para toda su organización) la suplanta por tokens de corta duración.
 resource "google_service_account" "datadog" {
   project      = var.project_id
-  account_id   = "sa-datadog-dev"
-  display_name = "Datadog - métricas de Google Cloud (dev)"
+  account_id   = "sa-datadog-${module.iam.ambiente}"
+  display_name = "Datadog - métricas de Google Cloud (${module.iam.ambiente})"
 }
 
 resource "google_project_iam_member" "datadog_metricas" {

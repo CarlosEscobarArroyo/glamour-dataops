@@ -149,14 +149,16 @@ module "openmetadata" {
 module "secrets_datadog" {
   count   = var.openmetadata ? 1 : 0
   source  = "../../modules/secrets"
-  nombres = ["datadog-openmetadata-dev-api-key"]
+  nombres = ["datadog-openmetadata-${module.iam.ambiente}-api-key"]
   lectores = {
     openmetadata = module.openmetadata[0].member
   }
 }
 
-# El secreto se creó a mano con gcloud; este bloque lo adopta sin recrearlo.
-import {
-  to = module.secrets_datadog[0].google_secret_manager_secret.secreto["datadog-openmetadata-dev-api-key"]
-  id = "projects/${var.project_id}/secrets/datadog-openmetadata-dev-api-key"
+# Alertas por correo: pipeline fallido y memoria de la VM de OpenMetadata.
+module "alertas" {
+  source          = "../../modules/alertas"
+  prefijo         = local.prefijo
+  workflow        = "${local.prefijo}-wf-pipeline"
+  vm_openmetadata = var.openmetadata ? module.openmetadata[0].nombre : null
 }

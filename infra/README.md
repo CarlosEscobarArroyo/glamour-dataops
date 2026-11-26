@@ -18,6 +18,7 @@ infra/
 │   ├── bigquery/         Datasets staging, validation y dimensional, con sus accesos.
 │   ├── gobierno/         Policy tag y enmascarado de los datos personales de las vendedoras.
 │   ├── orchestration/    Cloud Workflows y Cloud Scheduler (5:00 a. m., Lima).
+│   ├── alertas/          Alertas por correo: pipeline fallido y memoria de OpenMetadata.
 │   └── openmetadata/     VM para OpenMetadata con IP fija; interfaz pública, SSH por IAP.
 └── environments/
     ├── dev/              glamour-dataops-dev  (rama dev)
@@ -129,7 +130,8 @@ Se dispara con cambios en `infra/`.
 
 ## OpenMetadata
 
-Se crea solo donde `openmetadata = true` en `terraform.tfvars` (hoy, dev).
+Se crea donde `openmetadata = true` en `terraform.tfvars` (dev y prd, una VM por
+ambiente).
 Terraform solo crea la VM con una IP fija; Docker y OpenMetadata se instalan a
 mano, entrando con el comando del output `openmetadata_ssh`.
 
@@ -139,6 +141,18 @@ instale. El SSH solo entra por IAP.
 
 Los metadatos viven en el disco de la VM: si Terraform la recrea o la destruye,
 se pierden.
+
+## Monitoreo
+
+- **Alertas** (`modules/alertas`): avisan por correo si una ejecución del workflow
+  falla y si la VM de OpenMetadata pasa de 14 GiB de memoria. El canal de correo se
+  crea a mano en cada proyecto, con el nombre `Correo`, para que la dirección no
+  quede en el repo; Terraform lo busca por ese nombre y falla si no existe.
+- **Datadog** (`datadog.tf`): la cuenta `sa-datadog-<ambiente>` con la que Datadog
+  lee las métricas. Después del apply hay que agregarla a mano en la integración de
+  Google Cloud de Datadog.
+- La API key del agente de Datadog de la VM va en el secreto
+  `datadog-openmetadata-<ambiente>-api-key`; Terraform lo crea vacío.
 
 ## Datos personales
 

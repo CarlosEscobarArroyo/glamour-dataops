@@ -25,6 +25,7 @@ locals {
     "artifactregistry.googleapis.com",
     "bigquery.googleapis.com",
     "bigquerydatapolicy.googleapis.com",
+    "cloudasset.googleapis.com", # integración de Datadog
     "cloudresourcemanager.googleapis.com",
     "cloudscheduler.googleapis.com",
     "compute.googleapis.com",
@@ -55,6 +56,7 @@ locals {
     "roles/datacatalog.categoryAdmin",
     "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountUser",
+    "roles/monitoring.editor", # alertas de Cloud Monitoring
     "roles/resourcemanager.projectIamAdmin",
     "roles/secretmanager.admin",
     "roles/storage.admin",
