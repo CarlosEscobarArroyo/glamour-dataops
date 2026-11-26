@@ -1,7 +1,7 @@
 # Definición del Cloud Run Job de calidad. El CI reemplaza ${PROJECT_ID},
 # ${AMBIENTE}, ${REGION} e ${IMAGE} con los valores del ambiente y aplica el archivo con
 #   gcloud run jobs replace job.yaml --region <región>
-# El mismo archivo sirve para dev y prod. No se incluye en la imagen.
+# El mismo archivo sirve para dev y prd. No se incluye en la imagen.
 apiVersion: run.googleapis.com/v1
 kind: Job
 metadata:
