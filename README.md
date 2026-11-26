@@ -48,7 +48,7 @@ Sus pruebas viven en `tests/`, que replica la estructura de `src/`.
 Guía del primer contenedor: [extracción de MariaDB a GCS](./src/extraction/README.md).
 Convención de publicación: [imágenes de los Jobs en Artifact Registry](./docs/artifact_registry.md).
 El workflow [Deploy Jobs](./.github/workflows/deploy-jobs.yml) ejecuta las pruebas del componente
-que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `main` publica su imagen y
+que cambió, sin acceder a MariaDB ni GCP, y en `dev` y `prd` publica su imagen y
 despliega su Job. El workflow [Orquestación](./.github/workflows/orchestration.yml)
 publica la definición del flujo de Cloud Workflows cuando cambia `src/orchestration/`.
 El Job de calidad se despliega con el mismo CI y el workflow lo ejecuta antes de
@@ -145,7 +145,7 @@ valor. El código de los componentes solo lee variables de entorno.
 * **CI de transformación:** el modelo dimensional. Guarda cada `.sql` de `src/transformation/` como procedimiento almacenado en `bq_validation` y carga `ref_ubigeo.csv` en `bq_staging`.
 * **CI de orquestación:** el contenido del workflow. Publica `src/orchestration/workflow_comercial.yaml` con `gcloud workflows deploy` cuando cambia.
 * **CI de los Jobs:** cada Cloud Run Job completo. Un único workflow detecta qué componente de `src/` cambió y, para ese componente, ejecuta las pruebas, construye y publica la imagen, rellena los marcadores de `job.yaml` y lo aplica con `gcloud run jobs replace`. Falla si queda un marcador sin resolver.
-* **Ramas:** `dev` despliega al proyecto dev; `main` despliega a prd con aprobación.
+* **Ramas:** `dev` despliega al proyecto dev; `prd` despliega a prd con aprobación.
 
 ### Archivos de un componente
 
@@ -190,7 +190,7 @@ a partir del proyecto.
 
 ### Pendiente de decidir
 
-Imagen de prd: reconstruirla al hacer merge a `main` o copiar la validada en dev.
+Imagen de prd: reconstruirla al hacer merge a `prd` o copiar la validada en dev.
 
 ---
 

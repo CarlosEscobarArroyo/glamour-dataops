@@ -21,7 +21,7 @@ infra/
 │   └── openmetadata/     VM para OpenMetadata con IP fija; interfaz pública, SSH por IAP.
 └── environments/
     ├── dev/              glamour-dataops-dev  (rama dev)
-    └── prd/             glamour-dataops-prd (rama main)
+    └── prd/             glamour-dataops-prd (rama prd)
 ```
 
 `main.tf` es igual en `dev` y `prd`; lo que cambia está en `terraform.tfvars`
@@ -108,9 +108,9 @@ se dan a mano en la consola, no con Terraform.
 
 | Evento | Qué hace |
 | --- | --- |
-| Pull request a `dev` o `main` | `fmt`, `validate` y `plan`; el plan queda en el resumen del run |
+| Pull request a `dev` o `prd` | `fmt`, `validate` y `plan`; el plan queda en el resumen del run |
 | Merge a `dev` | `apply` en `glamour-dataops-dev` |
-| Merge a `main` | `apply` en `glamour-dataops-prd`, después de la aprobación |
+| Merge a `prd` | `apply` en `glamour-dataops-prd`, después de la aprobación |
 
 Se dispara con cambios en `infra/`.
 

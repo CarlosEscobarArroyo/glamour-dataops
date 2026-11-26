@@ -1,16 +1,16 @@
 name: Terraform
 
-# Rama dev -> proyecto glamour-dataops-dev; rama main -> glamour-dataops-prd.
+# Rama dev -> proyecto glamour-dataops-dev; rama prd -> glamour-dataops-prd.
 # Pull request: valida y muestra el plan. Push (merge): aplica; prd espera aprobación.
 
 on:
   pull_request:
-    branches: [dev, main]
+    branches: [dev, prd]
     paths:
       - "infra/**"
       - ".github/workflows/terraform.yml"
   push:
-    branches: [dev, main]
+    branches: [dev, prd]
     paths:
       - "infra/**"
       - ".github/workflows/terraform.yml"
@@ -23,7 +23,7 @@ permissions:
 env:
   TF_VERSION: "1.17.1"
   TF_IN_AUTOMATION: "true"
-  ENTORNO: ${{ (github.base_ref || github.ref_name) == 'main' && 'prd' || 'dev' }}
+  ENTORNO: ${{ (github.base_ref || github.ref_name) == 'prd' && 'prd' || 'dev' }}
 
 jobs:
   validar:
@@ -52,7 +52,7 @@ jobs:
     needs: validar
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    concurrency: terraform-${{ (github.base_ref || github.ref_name) == 'main' && 'prd' || 'dev' }}
+    concurrency: terraform-${{ (github.base_ref || github.ref_name) == 'prd' && 'prd' || 'dev' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -84,8 +84,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # El environment "prd" tiene revisores obligatorios: el apply espera aprobación.
-    environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
-    concurrency: terraform-${{ github.ref_name == 'main' && 'prd' || 'dev' }}
+    environment: ${{ github.ref_name == 'prd' && 'prd' || 'dev' }}
+    concurrency: terraform-${{ github.ref_name == 'prd' && 'prd' || 'dev' }}
     steps:
       - uses: actions/checkout@v7
 
