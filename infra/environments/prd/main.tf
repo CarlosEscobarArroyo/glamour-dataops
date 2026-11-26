@@ -133,12 +133,32 @@ module "orchestration" {
 
 # Catálogo de datos. Solo existe donde openmetadata = true (ver terraform.tfvars).
 module "openmetadata" {
-  count      = var.openmetadata ? 1 : 0
-  source     = "../../modules/openmetadata"
-  prefijo    = local.prefijo
-  ambiente   = module.iam.ambiente
-  region     = var.region
-  zona       = "${var.region}-b"
-  network_id = module.vpc.network_id
-  subnet_id  = module.vpc.subnet_id
+  count              = var.openmetadata ? 1 : 0
+  source             = "../../modules/openmetadata"
+  prefijo            = local.prefijo
+  ambiente           = module.iam.ambiente
+  region             = var.region
+  zona               = "${var.region}-b"
+  network_id         = module.vpc.network_id
+  subnet_id          = module.vpc.subnet_id
+  acceso_web_publico = true
+}
+
+# API key de Datadog para monitorear OpenMetadata. Va en su propio módulo para que
+# solo la VM pueda leerla (el módulo da acceso a todos los secretos de la lista).
+module "secrets_datadog" {
+  count   = var.openmetadata ? 1 : 0
+  source  = "../../modules/secrets"
+  nombres = ["datadog-openmetadata-${module.iam.ambiente}-api-key"]
+  lectores = {
+    openmetadata = module.openmetadata[0].member
+  }
+}
+
+# Alertas por correo: pipeline fallido y memoria de la VM de OpenMetadata.
+module "alertas" {
+  source          = "../../modules/alertas"
+  prefijo         = local.prefijo
+  workflow        = "${local.prefijo}-wf-pipeline"
+  vm_openmetadata = var.openmetadata ? module.openmetadata[0].nombre : null
 }
