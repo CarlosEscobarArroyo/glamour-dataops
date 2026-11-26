@@ -33,8 +33,11 @@ resource "google_monitoring_alert_policy" "pipeline_fallido" {
     }
   }
 
+  # La API exige contenido y tipo juntos: una documentación con solo el asunto falla al crear.
   documentation {
-    subject = "ALERTA - Fallo en pipeline Glamour DataOps"
+    subject   = "ALERTA - Fallo en pipeline Glamour DataOps"
+    mime_type = "text/markdown"
+    content   = "Una ejecución del workflow ${var.workflow} terminó en FAILED: el pipeline no publicó datos nuevos y el modelo dimensional conserva la última versión válida.\n\nRevisar la ejecución en Cloud Workflows y los logs del Job que falló (extracción o calidad)."
   }
 
   alert_strategy {
